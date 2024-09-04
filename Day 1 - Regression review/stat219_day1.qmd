@@ -1,0 +1,50 @@
+---
+title: "Day 1 - Regression review"
+format: 
+  pdf:
+    fontsize: 12pt
+    geometry:
+      - inner=1.5cm
+      - outer=1.5cm
+      - top=2.5cm
+      - bottom=2.5cm
+    include-in-header:
+      - text: |
+          \addtokomafont{disposition}{\rmfamily}
+          \usepackage{fancyhdr, lastpage}
+editor: source
+---
+
+\pagestyle{fancyplain}
+\fancyhf{}
+\lhead{\fancyplain{}{STAT 0219: Time Series Analysis}}
+\rhead{\fancyplain{}{Stratton - Day 1}}
+\fancyfoot[RO, LE] {page \thepage\ of \pageref{LastPage} }
+\thispagestyle{plain}
+
+\vspace{-1in}
+
+## Introduction
+
+::: {.callout-note title="ChatGPT: What is time series analysis?"}
+The study of time series is the study of statistical techniques used to analyzed time-ordered data points. The goal is to identify patterns, trends, and relationships within the data over time. This type of analysis is crucial in various fields, including finance, economics, environmental science, and engineering. Key components and objectives of time series analysis include: trend analysis, understanding seasonality, forecasting, and decomposition. 
+:::
+
+The study of serially correlated data builds upon the basic framework of linear models. We will begin our journey with time series by briefly reviewing regression and linear models.
+
+
+## R, RStudio, and TinyTex
+
+The statistical software R will be used heavily in this course. I recommend using the integrated development environment (IDE) RStudio alongside R for statistical analyses. Additionally, you will be required to submit homework assignments, lab assignments, and exams as .pdf files in this class. RStudio allows for creation of .pdf documents that integrate code and written responses through Quarto documents (.qmd files). In order to compile a .qmd file to a .pdf, you will require a LaTeX distribution. The R package `tinytex`
+
+
+
+\newpage
+
+
+```{r, echo = T, warning = F, message = F}
+library(tidyverse) # for data manipulation
+library(MASS) # for data
+data(geyser) # get the data
+head(geyser) # first six rows
+```

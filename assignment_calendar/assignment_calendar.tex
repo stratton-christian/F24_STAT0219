@@ -1,0 +1,92 @@
+\documentclass[11pt, a4paper]{article}
+%\usepackage{geometry}
+\usepackage[inner=2cm,outer=2cm,top=2.5cm,bottom=2.5cm]{geometry}
+\usepackage{termcal}
+
+% Few useful commands (our classes always meet either on Monday and Wednesday 
+% or on Tuesday and Thursday)
+
+\newcommand{\MWClass}{%
+\calday[Monday]{\classday} % Monday
+\skipday % Tuesday
+\calday[Wednesday]{\classday} % Wednesday
+\skipday % Thursday (no class)
+\skipday % Friday 
+\skipday\skipday % weekend (no class)
+}
+
+\newcommand{\TRClass}{%
+\skipday % Monday (no class)
+\calday[Tuesday]{\classday} % Tuesday
+\skipday % Wednesday (no class)
+\calday[Thursday]{\classday} % Thursday
+\skipday % Friday 
+\skipday\skipday % weekend (no class)
+}
+
+\newcommand{\Holiday}[2]{%
+\options{#1}{\noclassday}
+\caltext{#1}{#2}
+}
+
+\usepackage{fancyhdr}
+\pagestyle{fancyplain}
+\fancyhf{}
+\lhead{ \fancyplain{}{STAT 0219: Time Series Analysis} }
+%\chead{ \fancyplain{}{} }
+\rhead{ \fancyplain{}{Fall 2024} }
+
+
+\begin{document}
+\begin{center}
+\textbf{Tentative assignment schedule}
+
+\begin{calendar}{9/9/2024}{13} % Semester starts on 1/11/2019/9/20240 and last for 15 weeks
+\setlength{\calboxdepth}{.42in}
+\MWClass
+
+% schedule
+\caltexton{1}{HW 1 assigned}
+\caltextnext{}
+\caltextnext{HW 1 due \\ HW 2 assigned}
+\caltextnext{Lab 1 assigned}
+\caltextnext{HW 2 due \\ HW 3 assigned}
+\caltextnext{Lab 1 due}
+\caltextnext{HW 3 due \\ HW 4 assigned}
+\caltextnext{}
+\caltextnext{HW 4 due \\ \textbf{Exam 1} assigned}
+\caltextnext{}
+\caltextnext{\textbf{Exam 1} due \\ Lab 2 assigned \\ HW 5 assigned}
+\caltextnext{}
+\caltextnext{Lab 2 due \\ HW 5 due \\ HW 6 assigned}
+\caltextnext{Lab 3 assigned}
+\caltextnext{HW 6 due \\ HW 7 assigned}
+\caltextnext{Lab 3 due}
+\caltextnext{HW 7 due \\ Hw 8 assigned}
+\caltextnext{Lab 4 assigned}
+\caltextnext{HW 8 due \\ HW 9 assigned}
+\caltextnext{Lab 4 due \\ Lab 5 assigned}
+\caltextnext{HW 9 due \\ \textbf{Exam 2} assigned}
+\caltextnext{Lab 5 due}
+\caltextnext{\textbf{Exam 2} due}
+\caltextnext{Project presentations due}
+
+% spectral analysis, state space models, exponential smoothing, multivariate time series
+
+% holidays
+\Holiday{11/25/2024}{Thanksgiving recess}
+\Holiday{11/26/2024}{Thanksgiving recess}
+\Holiday{11/27/2024}{Thanksgiving recess}
+
+% remove days
+\options{12/9/2024}{\noclassday} % finals week
+\options{12/10/2024}{\noclassday} % finals week
+\options{12/11/2024}{\noclassday} % finals week
+\options{12/16/2024}{\noclassday} % finals week
+\options{12/17/2024}{\noclassday} % finals week
+\options{12/18/2024}{\noclassday} % finals week
+\caltext{4/27/2010}{\textbf{Final Exam}}
+
+\end{calendar}
+\end{center}
+\end{document}

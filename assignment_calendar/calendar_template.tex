@@ -1,0 +1,42 @@
+\documentclass[11pt, a4paper]{article}
+%\usepackage{geometry}
+\usepackage[inner=2cm,outer=2cm,top=2.5cm,bottom=2.5cm]{geometry}
+\usepackage{termcal}
+
+% Few useful commands (our classes always meet either on Monday and Wednesday 
+% or on Tuesday and Thursday)
+
+\newcommand{\MWClass}{%
+\calday[Monday]{\classday} % Monday
+\skipday % Tuesday
+\calday[Wednesday]{\classday} % Wednesday
+\skipday % Thursday (no class)
+\skipday % Friday 
+\skipday\skipday % weekend (no class)
+}
+
+\newcommand{\TRClass}{%
+\skipday % Monday (no class)
+\calday[Tuesday]{\classday} % Tuesday
+\skipday % Wednesday (no class)
+\calday[Thursday]{\classday} % Thursday
+\skipday % Friday 
+\skipday\skipday % weekend (no class)
+}
+
+\newcommand{\Holiday}[2]{%
+\options{#1}{\noclassday}
+\caltext{#1}{#2}
+}
+
+\usepackage{fancyhdr}
+\pagestyle{fancyplain}
+\fancyhf{}
+\lhead{ \fancyplain{}{STAT 0219: Time Series Analysis} }
+%\chead{ \fancyplain{}{} }
+\rhead{ \fancyplain{}{Fall 2024} }
+
+
+\begin{document}
+$body$
+\end{document}

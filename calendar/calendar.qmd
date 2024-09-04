@@ -1,0 +1,57 @@
+---
+title: "Calendar"
+format:
+  pdf:
+    template: calendar_template.tex
+    keep-tex: true
+editor: source
+---
+\begin{center}
+\begin{calendar}{9/9/2024}{13} % Semester starts on 9/9/2024 and last for 13 weeks
+\setlength{\calboxdepth}{.42in}
+\MWClass
+
+% schedule
+\caltexton{1}{Regression review}
+\caltextnext{Ch. 1 - Visualizing time series}
+\caltextnext{Ch. 1 - Decomposition of series}
+\caltextnext{Lab - Decomposition of time series}
+\caltextnext{Ch. 2 - Correlation and stationarity}
+\caltextnext{Ch. 2 - Correlation and stationarity cont.}
+\caltextnext{Ch. 3 - Forecasting}
+\caltextnext{Ch. 3 - Smoothing}
+\caltextnext{Ch. 4 - White noise and random walks}
+\caltextnext{Ch. 4 - Autoregressive models}
+\caltextnext{Lab - Basic stochastic models}
+\caltextnext{Ch. 5 - Intro to time series regression}
+\caltextnext{Ch. 5 - Seasonal variables and regression harmonics}
+\caltextnext{Lab - Time series regression}
+\caltextnext{Ch. 5 - Regression forecasting}
+\caltextnext{Ch. 6 - Moving average models}
+\caltextnext{Ch. 6 - ARMA models}
+\caltextnext{Lab - Moving average processes}
+\caltextnext{Ch. 7 - Non-seasonal ARIMA models}
+\caltextnext{Lab - Non-seasonal ARIMA models}
+\caltextnext{Ch. 7 - Seasonal ARIMA models}
+\caltextnext{Lab - Seasonal ARIMA models}
+\caltextnext{Project work day}
+\caltextnext{Project presentations}
+
+% spectral analysis, state space models, exponential smoothing, multivariate time series
+
+% holidays
+\Holiday{11/25/2024}{Thanksgiving recess}
+\Holiday{11/26/2024}{Thanksgiving recess}
+\Holiday{11/27/2024}{Thanksgiving recess}
+
+% remove days
+\options{12/9/2024}{\noclassday} % finals week
+\options{12/10/2024}{\noclassday} % finals week
+\options{12/11/2024}{\noclassday} % finals week
+\options{12/16/2024}{\noclassday} % finals week
+\options{12/17/2024}{\noclassday} % finals week
+\options{12/18/2024}{\noclassday} % finals week
+\caltext{4/27/2010}{\textbf{Final Exam}}
+
+\end{calendar}
+\end{center}
