@@ -114,11 +114,113 @@ tinytex::install_tinytex()
 
 ## Regression review
 
-HERE
+To guide our review of regression, we will use average annual temperature measurements collected in Vermont since 1850, courtesy of [Berkeley Earth](https://berkeleyearth.org/data/), and curated by [Data World](https://data.world/data-society/global-climate-change-data).
 
-```{r, echo = T, warning = F, message = F}
-library(tidyverse) # for data manipulation
-library(MASS) # for data
-data(geyser) # get the data
-head(geyser) # first six rows
+1. Pull the `vt_temps.csv` file into R, create new variables denoting year and month, and create a new object called `vt_jan_temps` that contains only measurements from January.
+
+```{r, indent = "   ", echo = T, warning = F, message = F}
+# library packages
+library(tidyverse);library(lubridate)
+
+# read in data
+vt_temps <- readr::read_csv("vt_temps.csv")
+
+# create year and month variables
+vt_jan_temps <- vt_temps |>
+  mutate(
+    year = year(dt),
+    month = month(dt)
+  ) |>
+  filter(month == 1)
 ```
+
+2. Plot the average January temperature in Vermont by `dt`. Comment on the plot. Are there any noticeable trends?
+
+```{r, indent = "   ", echo = T, warning = F, message = F}
+vt_jan_temps |>
+  ggplot(aes(x = dt, y = AverageTemperature)) +
+  geom_line() +
+  theme_bw() +
+  labs(
+    x = "Year",
+    y = "Average temperature"
+  )
+```
+
+   :::{.callout-warning icon=false appearance="simple"}
+   Potentially a moderate, positive trend.
+   :::
+
+3. Fit a simple linear regression model with the average temperature as a response and the year as an explanatory variable. Interpret the slope coefficient. Is there evidence of a linear trend?
+
+```{r, indent = "   ", echo = T, warning = F, message = F}
+jan_lm <- lm(AverageTemperature ~ year, vt_jan_temps)
+summary(jan_lm)
+```
+
+   :::{.callout-warning icon=false appearance="simple"}
+   For each additional year, there is an estimated `r round(coef(jan_lm)[2], 5)` centigrade increase in the mean average temperature. There is moderate evidence (p-value of `r round(summary(jan_lm)$coefficients[2,4], 3)`) of a linear association between average temperature and year.
+   :::
+
+4. Plot the estimated regression model to the temperature time series. Does it appear to be a good fit to the data?
+
+```{r, indent = "   ", echo = T, warning = F, message = F}
+vt_jan_temps |>
+  ggplot(aes(x = dt, y = AverageTemperature)) +
+  geom_line() +
+  geom_smooth(method = "lm", se = F) +
+  theme_bw() +
+  labs(
+    x = "Year",
+    y = "Average temperature"
+  )
+```
+
+   :::{.callout-warning icon=false appearance="simple"}
+   Absolutely not. 
+   :::
+
+5. Assess the assumptions of the linear regression model; be sure to reference appropriate diagnostic plots. Are all the assumptions reasonably satisfied?
+
+```{r, indent = "   ", echo = T, warning = F, message = F, fig.dim = c(6, 6)}
+par(mfrow = c(2,2))
+plot(jan_lm)
+par(mfrow = c(1,1))
+```
+
+   :::{.callout-warning icon=false appearance="simple"}
+   - Independence
+   - Linearity
+   - Constant variance
+   - Normality
+   :::
+
+
+6. Using the (bad) linear regression model, predict the average January temperature for the years 2014 to 2024. Comment on the quality of the prediction. 
+
+```{r, indent = "   ", echo = T, warning = F, message = F}
+predict_tbl <- tibble(
+  year = 2014:2024,
+  AverageTemperature = predict(jan_lm, newdata = tibble(year = 2014:2024))
+)
+
+bind_rows(
+  vt_jan_temps %>% mutate(data = "obs"),
+  predict_tbl %>% mutate(data = "pred")
+) |>
+  filter(year >= 1970) |>
+  ggplot(aes(x = year, y = AverageTemperature)) + 
+  geom_line(aes(col = data, group = data)) +
+  theme_bw() +
+  labs(
+    x = "Year",
+    y = "Average temperature"
+  )
+```
+
+   :::{.callout-warning icon=false appearance="simple"}
+   Noticing a pattern here. The prediction is poor, and does not capture the nuance and cyclical detail of the time series.
+   :::
+
+
+
