@@ -107,7 +107,7 @@ tinytex::install_tinytex()
    in the YAML header and clicking render. Which languages rendered as boldface?
    
    :::{.callout-warning icon=false appearance="simple"}
-
+   Only the Markdown renders in both! In this class, we will generally prefer .pdf documents, so LaTeX or Markdown are permitted. 
    :::
    
    Learning LaTeX, Markdown, or HTML is not the focus of this class. However, you will be exposed to a fair amount of each language, and each of these languages are marketable with employers. I encourage you to play around with typesetting documents in RStudio!
@@ -127,37 +127,65 @@ To guide our review of regression, we will use average annual temperature measur
    :::
 
 ```{r, indent = "   ", echo = T, warning = F, message = F}
+# library packages
 library(tidyverse);library(lubridate)
+
+# read in data
+vt_temps <- readr::read_csv("vt_temps.csv")
+
+# create year and month variables
+vt_jan_temps <- vt_temps |>
+  mutate(
+    year = year(dt),
+    month = month(dt)
+  ) |>
+  filter(month == 1)
 ```
 
 2. Plot the average January temperature in Vermont by `dt`. Comment on the plot. Are there any noticeable trends?
 
 ```{r, indent = "   ", echo = T, warning = F, message = F}
-
+vt_jan_temps |>
+  ggplot(aes(x = dt, y = AverageTemperature)) +
+  geom_line() +
+  theme_bw() +
+  labs(
+    x = "Year",
+    y = "Average temperature"
+  )
 ```
 
    :::{.callout-warning icon=false appearance="simple"}
-
+   Potentially a moderate, positive trend, but it is a very noisy signal with some cyclical patterns.
    :::
 
 3. Fit a simple linear regression model with the average temperature as a response and the year as an explanatory variable. Interpret the slope coefficient. Is there evidence of a linear trend?
 
 ```{r, indent = "   ", echo = T, warning = F, message = F}
-
+jan_lm <- lm(AverageTemperature ~ year, vt_jan_temps)
+summary(jan_lm)
 ```
 
    :::{.callout-warning icon=false appearance="simple"}
-
+   For each additional year, there is an estimated `r round(coef(jan_lm)[2], 5)` centigrade increase in the mean average temperature, on average. There is moderate evidence (p-value of `r round(summary(jan_lm)$coefficients[2,4], 3)`) of a linear association between average temperature and year.
    :::
 
 4. Plot the estimated regression model on the temperature time series. Does it appear to be a good fit to the data?
 
 ```{r, indent = "   ", echo = T, warning = F, message = F}
-
+vt_jan_temps |>
+  ggplot(aes(x = dt, y = AverageTemperature)) +
+  geom_line() +
+  geom_smooth(method = "lm", se = F) +
+  theme_bw() +
+  labs(
+    x = "Year",
+    y = "Average temperature"
+  )
 ```
 
    :::{.callout-warning icon=false appearance="simple"}
-
+   Absolutely not. It captures the general trend okay, but does not address the "spikey" nature of the time series.
    :::
 
 5. Assess the assumptions of the linear regression model; be sure to reference appropriate diagnostic plots. Are all the assumptions reasonably satisfied?
@@ -171,18 +199,71 @@ library(tidyverse);library(lubridate)
 
 ```{r, indent = "   ", echo = T, warning = F, message = F, fig.dim = c(6, 6)}
 par(mfrow = c(2,2))
-
+plot(jan_lm)
 par(mfrow = c(1,1))
 ```
 
 6. Using the linear regression model, predict the average January temperature for the years 2014 to 2024. Be sure to include a 95% prediction interval for each year. Comment on the quality of the prediction. 
 
 ```{r, indent = "   ", echo = T, warning = F, message = F}
+# get prediction intervals directly with R
+pred <- predict(
+  jan_lm,
+  newdata = tibble(year = 2014:2024),
+  interval = "prediction",
+  level = 0.95
+) |> as_tibble()
 
+# alternatively, calculate by hand with SEs (in case you're curious)
+# pred_ <- predict(jan_lm, newdata = tibble(year = 2014:2024), se.fit = T)
+# pred <- tibble(
+#   fit = pred_$fit,
+#   lwr = pred_$fit - 
+#     qt(.975, jan_lm$df.residual) * 
+#     sqrt(pred_$residual.scale^2 + pred_$se.fit^2),
+#   upr = pred_$fit + 
+#     qt(.975, jan_lm$df.residual) *
+#     sqrt(pred_$residual.scale^2 + pred_$se.fit^2)
+# )
+
+# create table for plotting
+predict_tbl <- tibble(
+  year = 2014:2024,
+  AverageTemperature = pred$fit,
+  lwrSE = pred$fit - predict(
+    jan_lm, newdata = tibble(year = 2014:2024), se.fit = T
+  )$se.fit,
+  uprSE = pred$fit + predict(
+    jan_lm, newdata = tibble(year = 2014:2024), se.fit = T
+  )$se.fit,
+  lwr95 = pred$lwr,
+  upr95 = pred$upr
+)
+
+# plot prediction with intervals
+# I have filtered to after 1970 to improve visibility of the prediction
+bind_rows(
+  vt_jan_temps %>% mutate(data = "obs"),
+  predict_tbl %>% mutate(data = "pred")
+) |>
+  filter(year >= 1970) |>
+  ggplot(aes(x = year, y = AverageTemperature)) + 
+  geom_line(aes(col = data, group = data)) +
+  geom_ribbon(
+    aes(x = year, ymin = lwrSE, ymax = uprSE), fill = "gray", alpha = 0.4
+  ) +
+  geom_ribbon(
+    aes(x = year, ymin = lwr95, ymax = upr95), fill = "gray", alpha = 0.2
+  ) +
+  theme_bw() +
+  labs(
+    x = "Year",
+    y = "Average temperature"
+  )
 ```
 
    :::{.callout-warning icon=false appearance="simple"}
-
+   Noticing a pattern here. The prediction is poor, and does not capture the nuance and cyclical detail of the time series.
    :::
 
 
