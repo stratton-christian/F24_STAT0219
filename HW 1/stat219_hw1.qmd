@@ -1,0 +1,119 @@
+---
+title: "Homework 1"
+format:
+  pdf:
+    fontsize: 12pt
+    geometry:
+      - inner=1.5cm
+      - outer=1.5cm
+      - top=2.5cm
+      - bottom=2.5cm
+    include-in-header:
+      - text: |
+          \addtokomafont{disposition}{\rmfamily}
+          \usepackage{fancyhdr, lastpage, framed, caption, xcolor}
+          \captionsetup[figure]{labelformat=empty}
+          \pagestyle{fancyplain}
+          \fancyhf{}
+          \lhead{\fancyplain{}{STAT 0219: Time Series Analysis}}
+          \rhead{\fancyplain{}{Stratton - HW1}}
+          \fancyfoot[RO, LE] {page \thepage\ of \pageref{LastPage}}
+          \thispagestyle{plain}
+editor: source
+---
+<!-- Note: the YAML header is everything above this line. -->
+\vspace{-3in}
+\textbf{Name:} Your name here  
+\textbf{Due:} 2024/09/16
+\vspace{1.5in}
+
+Be sure to submit **both** the .pdf and .qmd file to Canvas by Monday, September 16th at 11:59 pm. Additionally, when possible, your answers should be denoted with a callout box. For example, if the question is, "What is the meaning of life?"
+
+:::{.callout-warning icon=false appearance="simple"}
+42
+:::
+
+1. [1 pt] Run the following code so that I know what version of R you have installed.
+
+```{r, indent = "   ", echo = T, comment = NA, warning = F, message = F}
+sessionInfo()
+```
+
+2. [10 pt] For this assignment, we will use a data set describing weather station measurements at the Knapp State Airport, west of Barre, VT. This data set is publicly available and provided by the state of [Vermont](https://data.vermont.gov/Environment/Weather-At-Barre-Montpelier-Knapp-State-Airport-VT/x9j3-6igb/about_data). The purpose of this question is to import and manicure the data, so that we have a clean time series for analysis later in the assignment. 
+
+   a) [1 pt] Import the Barre weather station data and print the first six rows. 
+   
+```{r, indent = "      ", echo = T, comment = NA, warning = F, message = F}
+
+```
+      
+   b) [1 pt] Create a new data frame, called `barre_clean`, that includes a `year`, `month`, and `day` column. 
+   
+```{r, indent = "      ", echo = T, comment = NA, warning = F, message = F}
+
+```
+      
+   c) [2 pt] It is always advised to inspect the data before manipulating it. Create a table of the number of observed days by year. Filter to years with fewer than 365 days and greater than 366 days and print the resulting data frame. Do you notice anything strange?
+   
+```{r, indent = "      ", echo = T, comment = NA, warning = F, message = F}
+
+``` 
+
+      :::{.callout-warning icon=false appearance="simple"}
+
+      :::
+   
+   d) [2 pt] Create a new data frame, called `barre_monthly`, that summarizes the total sum of snowfall in each month (you may ignore any oddities you found in the previous question, for now). The resulting data frame should have a `sum_snowfall` column, a `year` column, and a `month` column. Arrange the data frame by year and month. Print the first and last six rows of `barre_monthly`.
+   
+```{r, indent = "      ", echo = T, comment = NA, warning = F, message = F}
+
+```
+
+   e) [1 pt] Create a histogram of the `sum_snowfall` in February. Does anything strike you as odd?
+   
+```{r, indent = "      ", echo = T, comment = NA, warning = F, message = F}
+
+```
+
+      :::{.callout-warning icon=false appearance="simple"}
+
+      :::
+
+   f) [1 pt] What years contain 0 sum total snowfall in February? Does anything strike you as odd?
+   
+```{r, indent = "      ", echo = T, comment = NA, warning = F, message = F}
+
+```
+
+      :::{.callout-warning icon=false appearance="simple"}
+
+      :::
+
+   g) [2 pt] Create a `ts` object containing the sum total monthly snowfall between 1950 and 1996 (hopefully you are convinced that we should not include `1997:2015`), called `barre_ts`. What is the frequency of this time series?
+   
+```{r, indent = "      ", echo = T, comment = NA, warning = F, message = F}
+
+```
+
+      :::{.callout-warning icon=false appearance="simple"}
+
+      :::
+
+3. [5 pt] You should now have a clean `ts` object, called `barre_ts`. Using this object, describe the sum total monthly snowfall (in) at the Knapp State Airport weather station. Be sure to reference any apparent trends or seasonality in your response, including figures that support your statements. 
+
+   :::{.callout-warning icon=false appearance="simple"}
+
+   :::
+   
+```{r, indent = "   ", echo = T, comment = NA, warning = F, message = F, fig.dim = c(6, 8)}
+
+```
+   
+   
+   
+   
+   
+   
+
+
+   
