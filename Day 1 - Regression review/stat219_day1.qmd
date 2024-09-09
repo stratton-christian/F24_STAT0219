@@ -185,5 +185,8 @@ par(mfrow = c(1,1))
 
    :::
 
+7. With the remaining time, locate a publicly available data source that could be coerced into a discrete time series. Email the data source to me, and include your name, intended major, and year in school. Some useful websites for finding data sets include [Kaggle](https://www.kaggle.com/) and [data.world](https://data.world/datasets/open-data).
 
+   :::{.callout-warning icon=false appearance="simple"}
 
+   :::
