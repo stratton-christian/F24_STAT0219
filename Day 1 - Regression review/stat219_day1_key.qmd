@@ -132,10 +132,12 @@ library(tidyverse);library(lubridate)
 
 # read in data
 vt_temps <- readr::read_csv("vt_temps.csv")
+vt_temps <- read.csv("vt_temps.csv")
 
 # create year and month variables
 vt_jan_temps <- vt_temps |>
   mutate(
+    dt = as.Date(dt),
     year = year(dt),
     month = month(dt)
   ) |>
@@ -174,9 +176,10 @@ summary(jan_lm)
 
 ```{r, indent = "   ", echo = T, warning = F, message = F}
 vt_jan_temps |>
-  ggplot(aes(x = dt, y = AverageTemperature)) +
+  ggplot(aes(x = year, y = AverageTemperature)) +
   geom_line() +
   geom_smooth(method = "lm", se = F) +
+  # geom_abline(aes(intercept = coef(jan_lm)[1], slope = coef(jan_lm)[2])) +
   theme_bw() +
   labs(
     x = "Year",
@@ -191,10 +194,10 @@ vt_jan_temps |>
 5. Assess the assumptions of the linear regression model; be sure to reference appropriate diagnostic plots. Are all the assumptions reasonably satisfied?
 
    :::{.callout-warning icon=false appearance="simple"}
-   - Independence
-   - Linearity
-   - Constant variance
-   - Normality
+   - *Independence:* We assume that the average temperature measurements from each time point are independent of one another. This assumption is almost certainly violated, as we expect temperatures from sequential months to be more similar than temperatures from months further apart in time.
+   - *Linearity:* We assume linearity of the residuals. The residuals vs fitted values plot presents as a random cloud of points with little-to-no leftover structure or trend, suggesting that this assumption is reasonably satisfied.
+   - *Constant variance:* We assume that the residuals have constant variance. We see approximately even vertical spread of the residuals for all fitted values in the residuals vs fitted values plot, suggesting that this assumption is reasonably satisfied.
+   - *Normality:* We assume that the residuals are normally distributed. There are no significant (in the english language sense, rather than statistical sense) departures from normality in the normal Q-Q plot, as the points follow the theoretical 1-1 quantile line fairly well. Again, this assumption appears reasonably satisfied. 
    :::
 
 ```{r, indent = "   ", echo = T, warning = F, message = F, fig.dim = c(6, 6)}
@@ -263,7 +266,7 @@ bind_rows(
 ```
 
    :::{.callout-warning icon=false appearance="simple"}
-   Noticing a pattern here. The prediction is poor, and does not capture the nuance and cyclical detail of the time series.
+   Noticing a pattern here. The prediction is extremely poor, and does not capture the nuance and cyclical detail of the time series. The take away here is that classic linear regression is **not** well-suited to handle time series problems, both due to the poor prediction and violation of the independence assumption.
    :::
 
 
