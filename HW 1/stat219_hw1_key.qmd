@@ -44,7 +44,7 @@ sessionInfo()
    a) [1 pt] Import the Barre weather station data and print the first six rows. 
    
 ```{r, indent = "      ", echo = T, comment = NA, warning = F, message = F}
-library(tidyverse)
+library(tidyverse);library(lubridate)
 barre_weather <- readr::read_csv("barre_weather.csv")
 head(barre_weather)
 ```
