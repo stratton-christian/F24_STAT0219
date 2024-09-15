@@ -1,0 +1,207 @@
+---
+title: "Day 3 - Decomposition of time series"
+format:
+  pdf:
+    fontsize: 12pt
+    geometry:
+      - inner=1.5cm
+      - outer=1.5cm
+      - top=2.5cm
+      - bottom=2.5cm
+    include-in-header:
+      - text: |
+          \addtokomafont{disposition}{\rmfamily}
+          \usepackage{fancyhdr, lastpage, framed, caption, xcolor}
+          \captionsetup[figure]{labelformat=empty}
+          \pagestyle{fancyplain}
+          \fancyhf{}
+          \lhead{\fancyplain{}{STAT 0219: Time Series Analysis}}
+          \rhead{\fancyplain{}{Stratton - Day 3}}
+          \fancyfoot[RO, LE] {page \thepage\ of \pageref{LastPage}}
+          \thispagestyle{plain}
+editor: source
+---
+\vspace{-1in}
+
+## Introduction
+
+The purpose of today's lecture is to understand how to decompose a time series into its constituent components in R. To guide our exploration, we will return to the Vermont temperatures and Pan Am data sets.  
+
+```{r, echo = T, warning = F, message = F}
+# packages
+library(tidyverse)
+
+# load data and rename
+## Pan Am
+data(AirPassengers)
+ap <- AirPassengers
+
+## vt temps
+vt_temps <- readr::read_csv("vt_temps.csv")
+```
+
+***
+
+\newpage
+
+## Review: creating `ts` objects
+
+Create a `ts` object, called `vt_ts`, for the monthly temperatures in Vermont that spans from 1970/06/01 to 2013/04/01. Plot the time series. 
+
+```{r, fig.dim = c(7, 3.75)}
+
+```
+
+\newpage
+
+```{r, eval = F, echo = T}
+# alternative using window()
+vt_ts_long <- ts(
+  vt_temps$AverageTemperature,
+  start = c(1850, 1),
+  end = c(2013, 9),
+  freq = 12
+)
+
+vt_ts <- window(
+  vt_ts_long, 
+  start = c(1970, 6),
+  end = c(2013, 4)
+)
+```
+
+## Introducing definitions and notation 
+
+:::{.callout-note title="Random variables"}
+A ____________________, usually written $X$, is a variable whose possible values are the numerical outcomes of ___________ phenomenon. There are two types of random variables, ______________ and ____________.
+
+\vspace{.125in}
+
+Formally, a random variable is a mapping from a sample space $S$ to the real numbers.
+:::
+
+\vspace{.125in}
+
+**Discrete random variables:** \hspace{1.5in} **Continuous random variables:**
+
+\vspace{2in}
+
+
+:::{.callout-note title="Time series notation"}
+A ____________________ of length $n$ is a sequence of ________________, which we denote $\{X_t : t = 1, \dots, n\} = \{X_1, X_2, \dots, X_n\}$. When referring to an observed time series, we use lowercase letters, $\{x_t : t = 1, \dots, n\} = \{x_1, x_2, \dots, x_n\}$. If the length of the series $n$ does not need to be specified, we will often use the abbreviated notation $\{x_t\}$. 
+:::
+
+- $\bar{x} = \frac{\sum x_i}{n}$ 
+
+\vspace{.75in}
+
+- $\hat{x}$
+
+\vspace{.75in}
+
+- $\hat{x}_{t+k|t}$
+
+\vspace{.75in}
+
+## Our first time series model
+
+:::{.callout-note title="Decomposition models"}
+An _______________________________ is a simple model for a time series that estimates the ____________, _______________________, and ____________. 
+
+$$
+x_t = m_t + s_t + z_t
+$$
+
+A ____________________________________ allows for the seasonal effect to increase as the trend increase. 
+
+$$
+x_t = m_t \cdot s_t \cdot z_t
+$$
+
+If the time series is strictly positive, it may be easier to fit an additive model on the log scale than a multiplicative model on the original scale. 
+
+$$
+\log(x_t) = m_t + s_t + z_t
+$$
+:::
+
+\newpage
+
+## Estimating $m_t$, $s_t$, and $z_t$
+
+How can we obtain an estimate of the trend effect?
+
+\vspace{1.5in}
+
+
+:::{.callout-note title="Centered moving average"}
+For time series with a period of 12 (i.e. monthly data), the ______________________ at time $t$ is given by
+$$
+\hat{m}_t = \frac{\frac{1}{2}x_{t-6}+x_{t-5}+\dots+x_{t-1}+x_t+x_{t+1}+\dots+x_{t+5}+\frac{1}{2}x_{t+6}}{12}
+$$
+where $t=7, \dots, n-6$
+:::
+
+\vspace{.125in}
+
+How can we obtain an estimate of the seasonal effect at each time $t$? How can we obtain an estimate of the overall seasonal effect associated with each month?
+
+\vspace{1.5in}
+
+:::{.callout-note title="Seasonal effects"}
+For an additive time series with a monthly frequency, the seasonal effect at time $t$ is estimated by 
+$$
+\hat{s}_t = x_t - \hat{m}_t
+$$
+We can obtain a single estimate of the monthly effect by averaging the effect of each month. 
+$$
+\bar{s}_t = \frac{\sum s_t}{T-1}
+$$
+where $T$ denotes the number of years. Often times, the estimated seasonal effect is **centered** after calculation - more on this on Wednesday. If a time series is multiplicative, the seasonal effect is instead estimated by 
+$$
+\hat{s}_t = \frac{x_t}{\hat{m}_t}
+$$
+:::
+
+\newpage
+
+How can we obtain an estimate of $z_t$?
+
+\vspace{1in}
+
+:::{.callout-note title="Residual error series"}
+The _________________________, also called _____________, is the raw time series adjusted for the trend and seasonal effects. On average, this series should have a mean of ____________. For an additive decomposition model, the residual error series is
+$$
+\hat{z}_t = x_t - \hat{m}_t - \bar{s}_t
+$$
+For a multiplicative decomposition model, the residual error series is
+$$
+\hat{z}_t = \frac{x_t}{\hat{m}_t \cdot \bar{s}_t}
+$$
+:::
+
+\newpage
+
+## Decomposition in R
+
+:::{.callout-note}
+The `decompose` function may be used in R to obtain a decomposition of a time series object. 
+:::
+
+```{r, fig.dim = c(7, 7)}
+plot(decompose(ap))
+```
+
+\newpage
+
+```{r, fig.dim = c(7, 7)}
+plot(decompose(ap, type = "multiplicative"))
+```
+
+\newpage
+
+```{r, fig.dim = c(7, 7)}
+plot(decompose(log(ap)))
+```
+
+

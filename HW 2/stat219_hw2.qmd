@@ -1,0 +1,133 @@
+---
+title: "Homework 2"
+format:
+  pdf:
+    fontsize: 12pt
+    geometry:
+      - inner=1.5cm
+      - outer=1.5cm
+      - top=2.5cm
+      - bottom=2.5cm
+    include-in-header:
+      - text: |
+          \addtokomafont{disposition}{\rmfamily}
+          \usepackage{fancyhdr, lastpage, framed, caption, xcolor}
+          \captionsetup[figure]{labelformat=empty}
+          \pagestyle{fancyplain}
+          \fancyhf{}
+          \lhead{\fancyplain{}{STAT 0219: Time Series Analysis}}
+          \rhead{\fancyplain{}{Stratton - HW2}}
+          \fancyfoot[RO, LE] {page \thepage\ of \pageref{LastPage}}
+          \thispagestyle{plain}
+editor: source
+---
+<!-- Note: the YAML header is everything above this line. -->
+\vspace{-3in}
+\textbf{Name:} Your name here  
+\textbf{Due:} 2024/09/23
+\vspace{1.5in}
+
+Be sure to submit **both** the .pdf and .qmd file to Canvas by Monday, September 23rd at 11:59 pm. 
+
+```{r, include = F}
+rm(list = ls())
+library(tidyverse)
+```
+
+0. [1 pt] Did you work with anyone on this homework? If so, who?
+
+   :::{.callout-warning icon=false appearance="simple"}
+   
+   :::
+
+1. [13 pt] For this homework, we continue practicing decomposition of time series, again recreating the output of `decompose`, but this time focusing on a multiplicative decomposition model. 
+
+   a) [1 pt] Load the `AirPassengers` data set.
+
+```{r, indent = "      ", eval = T, echo = T, warning = F, message = F}
+
+```
+
+   b) [1 pt] Plot the raw `AirPassengers` time series and describe what you see in terms of trend and seasonal effect. 
+   
+```{r, indent = "      ", eval = T, echo = T, warning = F, message = F, fig.dim = c(6, 3), fig.align = 'center'}
+
+```   
+
+      :::{.callout-warning icon=false appearance="simple"}
+
+      :::
+
+   c) [1 pt] Is an additive decomposition model appropriate for these data? Why or why not?
+   
+      :::{.callout-warning icon=false appearance="simple"}
+
+      :::
+   
+   d) [1 pt] Regardless of your answer to the previous question, fit a multiplicative decomposition model to the `AirPassengers` data set and plot the results.  
+
+```{r, indent = "      ", fig.dim = c(6, 6)}
+
+```
+
+   e) [3 pt] Calculate the trend component for the multiplicative model by hand, and compare your estimated trend effects to those obtained by `decompose` to ensure they are correct. 
+   
+```{r, indent = "      "}
+
+```
+
+   f) [3 pt] Calculate the average seasonal effect associated with each month and center the resulting estimates. Compare these 12 values to those obtained from the `decompose` function to ensure you have calculated them correctly.
+   
+```{r, indent = "      "}
+
+```   
+   
+   i) [3 pt] Calculate the residual error series from the previously created objects representing the trend and seasonal effects. Compare the by-hand calculation to the results from `decompose` to ensure that you have calculated the series correctly. 
+      
+```{r, indent = "      "}
+
+```      
+
+\newpage
+
+2. [5 pt] The moving average calculated by the `decompose` function is a type of **smoother** or **filter**. Smoothing/filtering algorithms generally seek to predict a response at time $t$ based on observations from both before and after $t$, as we saw with the moving average in question 1. Another popular smoother is the **loess** smoother, which stands for locally estimated scatterplot smoothing, and can be performed in R with the `stl` function. 
+
+   a) [2 pt] The following code fits a loess smoother to the `AirPassengers` data and prints the trend estimate. How does this compare to the trend created by `decompose`? Do you notice any major differences?
+   
+```{r, indent = "      ", warning = F, message = F}
+loess_periodic <- stl(AirPassengers, s.window = "periodic")
+plot(loess_periodic)
+loess_periodic$time.series[,2]
+```
+
+      :::{.callout-warning icon=false appearance="simple"}
+
+      :::
+
+   b) [2 pt] The code above assumes the window for calculating the loess smoother is based on the period of the time series. Play around with changing the `s.window` argument (which can be an integer) in the `stl` function. What do you notice about the resulting decomposition?
+   
+      :::{.callout-warning icon=false appearance="simple"}
+
+      :::
+
+```{r, indent = "      ", warning = F, message = F, fig.dim = c(6, 6), fig.align='center'}
+
+```
+
+```{r, indent = "      ",warning = F, message = F, fig.dim = c(6, 6), fig.align='center'}
+
+```
+
+```{r, indent = "      ",warning = F, message = F, fig.dim = c(6, 6), fig.align='center'}
+
+```
+
+   c) [1 pt] The smoothing and filtering algorithms provide a nice way to summarize a time series in retrospect. Can you think of a shortcoming for using these tools to estimate time series and create forecasts? 
+
+      :::{.callout-warning icon=false appearance="simple"}
+
+      :::
+
+3. [6 pt] Find an interesting **discrete** time series data set and create a decomposition of it below. Note that [Kaggle](https://www.kaggle.com/datasets) and [Data.world](https://data.world/datasets/open-data) often provide some nicely manicured, free data. 
+
+
