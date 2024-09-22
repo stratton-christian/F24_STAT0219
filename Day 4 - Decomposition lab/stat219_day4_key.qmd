@@ -79,10 +79,10 @@ plot(vt_decompose)
 
 \newpage
       
-   c) [2 pt] Calculate the trend component for 1850-07 to 1851-07 **by hand**. Verify you have correctly calculated the trend component by printing out a table of the trend component calculated by hand and via the decompose function. 
+   c) [2 pt] Calculate the trend component for 1900-07 to 1851-07 **by hand**. Verify you have correctly calculated the trend component by printing out a table of the trend component calculated by hand and via the decompose function. 
    
       :::{.callout-important title="Hint"}
-      To calculate this moving average by hand, consider using a **for loop**. Additionally, it is helpful to know that 1850-07 corresponds to $t=7$ and 1851-07 corresponds to $t=18$. Skeleton code to calculate the moving average is provided below.
+      To calculate this moving average by hand, consider using a **for loop**. Additionally, it is helpful to know that 1900-07 corresponds to $t=7$ and 1901-07 corresponds to $t=18$. Skeleton code to calculate the moving average is provided below.
       :::
    
 ```{r, indent = "      "}
@@ -182,7 +182,7 @@ knitr::kable(tibble(byhand = seasonal_means_centered, withr = vt_decompose$figur
       
 ```{r, indent = "      "}
 # calculate residual error series
-res <- vt_ts - vt_trend_full - seasonal_means_centered
+res <- vt_ts - vt_trend_full - rep(seasonal_means_centered, 101)
 
 # check some equalities
 cbind(head(res, n = 10), head(vt_decompose$random, n = 10))

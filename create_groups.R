@@ -3,22 +3,21 @@ names <- c(
   "An Adhikari",
   "Eujin Chae",
   "Bryce Charron",
-  "Laura Caroline Clervil",
+  "Laura Clervil",
   "Logan Cosgrove",
   "Anna Krouse",
   "Carly McAdam",
-  "Henrik David Nelson",
+  "Henrik Nelson",
+  "Lucas Nerbonne",
   "Liz Rightmire",
-  "Isaac Luis Rosario",
+  "Isaac Rosario",
   "Bruck Setu",
-  "Lia Smith",
-  "Hedavam Rafael Solano",
+  "Hedavam Solano",
   "Xander Swann",
   "Isaac Thompson",
-  "Grayson David Wade",
+  "Grayson Wade",
+  "Kayley Watson",
   "Kate Wohl",
-  "Yeimy Lizeth Zacarias",
-  "Claire Runqi Zhang",
   "Charlotte Zhuang"
 )
 
@@ -28,4 +27,4 @@ create_groups <- function(seed = NULL, names, n = 4){
   matrix(names[order], ncol = n)
 }
 
-create_groups(09092024, names, 4)
+create_groups(09182024, names, 4)
