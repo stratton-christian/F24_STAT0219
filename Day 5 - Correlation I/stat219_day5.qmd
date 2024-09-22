@@ -1,0 +1,287 @@
+---
+title: "Day 5 - Correlation I"
+format:
+  pdf:
+    fontsize: 12pt
+    geometry:
+      - inner=1.5cm
+      - outer=1.5cm
+      - top=2.5cm
+      - bottom=2.5cm
+    include-in-header:
+      - text: |
+          \addtokomafont{disposition}{\rmfamily}
+          \usepackage{fancyhdr, lastpage, framed, caption, xcolor}
+          \captionsetup[figure]{labelformat=empty}
+          \pagestyle{fancyplain}
+          \fancyhf{}
+          \lhead{\fancyplain{}{STAT 0219: Time Series Analysis}}
+          \rhead{\fancyplain{}{Stratton - Day 5}}
+          \fancyfoot[RO, LE] {page \thepage\ of \pageref{LastPage}}
+          \thispagestyle{plain}
+editor: source
+---
+\vspace{-1in}
+
+## Introduction
+
+Last week, we explored how to break down a time series into its trend, seasonal, and error components, with the error component referred to as the residual error series. We touched on the fact that this random component may not always be well-represented by independent random variables. Often, consecutive time points in the residual error series will be correlated. By identifying and modeling this correlation, we can dramatically improve our forecasts.
+
+To guide our discussion of correlation, we will use a [data set](https://discover-mtdeq.hub.arcgis.com/datasets/7ff8441bb7014aa1b8a1da58f51c16db_0/explore?filters=eyJzaXRlbmFtZSI6WyJCb3plbWFuIl0sImRhdGV0aW1lIjpbMTUxNDUwNTEyOTUxNy40NywxNzI2OTg0ODAwMDAwXX0%3D&location=46.335398%2C-109.995100%2C7.00&showTable=true) describing the amount of PM2.5 in the air in Bozeman, Montana during September of 2020. It may be helpful to know that PM2.5 is defined as small particulate matter in the air measuring 2.5 micrometers or less in diameter, and that there was a significant fire immediately outside Bozeman that began on 2020-09-04. You can see more about the fire in this [YouTube video](https://www.youtube.com/watch?v=0VuPzpDxH1c&ab_channel=KBZKBozemanMTNews).
+
+:::{.callout-important}
+The raw data had 11 hours that were missing measurements. For this set of notes, I have imputed these values using time series techniques that we will cover later in the semester. 
+:::
+
+```{r, echo = T, warning = F, message = F}
+# packages
+library(tidyverse)
+
+# read in the .rds file that I created
+mt_pm_sept2020 <- readRDS("mt_pm25_sept2020.rds")
+
+# grab some helper functions I wrote
+source("helpers.R")
+```
+
+\newpage
+
+**Review:** Create a `ts` object, called `boz_pm_ts`, that describes the hourly PM2.5 measurements throughout the month of September in Bozeman, MT. Create an additive decomposition of `boz_pm_ts`, called `boz_pm_decomp`, and plot that decomposition.
+
+:::{.callout-tip}
+The `lubridate` package features a function, `ymd_hms`, that parses dates of the format `Y/M/D H:M:S` into a date-time object.
+:::
+
+```{r, fig.dim = c(8, 8)}
+# clean up some columns
+mt_pm_clean <- mt_pm_sept2020 %>%
+  mutate(dt = ymd_hms(datetime)) %>%
+  dplyr::select(dt, rawvalue, everything()) %>%
+  arrange(dt)
+```
+
+\newpage
+
+## Motivating correlation
+
+The plot below provides a closer look at the residual error series. Does this appear to be a series of independent random variables? Why or why not?
+
+```{r, fig.dim = c(8, 4), warning = F, message = F}
+tibble(dt = mt_pm_clean$dt, res = boz_pm_decomp$random) %>%
+  ggplot(aes(x = dt, y = res)) +
+  geom_line(color = "lightblue") + 
+  geom_hline(aes(yintercept = 0), linetype = "dotdash") + 
+  theme_bw() +
+  labs(
+    x = "Date",
+    y = "Residual error series"
+  )
+```
+
+\newpage
+
+## A bit of mathematical statistics
+
+If you would like exposure to these concepts in rich detail, take STAT 310 and STAT 311. Below, we provide a brief overview of some mathematical statistics concepts to motivate our discussion of correlation.
+
+:::{.callout-note}
+The _____________________ or expectation of a random variable, denoted $E(X)$, is its mean value at the population level.
+$$
+\mu = E(X)
+$$
+The _____________________ of a random variable, denoted $Var(X)$, is the mean of the squared deviations about $\mu$.
+$$
+\sigma^2 = Var(X) = E[(X-\mu)^2]
+$$
+The _____________________ of a random variable is the square root of the variance. 
+$$
+\sigma = \sqrt{Var(X)} = \sqrt{E[(X-\mu)^2]}
+$$
+
+If there are two random variables, $X$ and $Y$, the _____________________, denoted $Cov(X, Y)$, is a measure of the linear association between $X$ and $Y$. 
+$$
+\gamma (X, Y) = E\left[(X - \mu_x)(Y-\mu_y)\right]
+$$
+
+The _____________________ is a unitless measure of the linear association between a pair of variables and is obtained by standardizing the covariance by dividing it by the product of the standard deviations of the variables. 
+$$
+\rho(X,Y) = \frac{E\left[(X - \mu_x)(Y-\mu_y) \right]}{\sigma_x\sigma_y} = \frac{\gamma(X,Y)}{\sigma_x\sigma_y}
+$$
+:::
+
+Sample estimates of the above quantities are obtained by adding the appropriate function of the individual data points and division by $n$ or, in the case of variance and covariance, $n-1$[^1]. We can use the first 15 rows of the Bozeman air data as an example. 
+
+```{r}
+x <- mt_pm_clean$rawvalue[1:15]; y <- mt_pm_clean$aqi_value[1:15]
+```
+
+[^1]: An estimator is unbiased for a population parameter if its expected value equals the population parameter. For example, it can be shown that $E(\bar{X}) = E\left(\frac{\sum X_i}{n}\right) = \mu$.
+
+- $\bar{x} = \frac{\sum x_i}{n}$
+
+```{r, indent = "  "}
+sum(x) / length(x)
+mean(x)
+```
+
+- $s^2 = \frac{\sum (x_i - \bar{x})^2}{n-1}$
+
+```{r, indent = "  "}
+sum((x - mean(x))^2)/(length(x))
+sum((x - mean(x))^2)/(length(x)-1)
+var(x)
+```
+
+- $\hat{\gamma}(x,y) = \frac{\sum (x_i - \bar{x})(y_i - \bar{y})}{n-1}$
+
+```{r, indent = "  "}
+sum((x - mean(x))*(y - mean(y)))/(length(x))
+sum((x - mean(x))*(y - mean(y)))/(length(x)-1)
+cov(x, y)
+```
+
+- $\hat{p}(x,y) = \frac{\hat{\gamma}(x,y)}{s_x s_y}$
+
+```{r, indent = "  "}
+cov(x, y)/ (sd(x)*sd(y))
+cor(x, y)
+```
+
+\newpage
+
+## Stationarity, ergodicity, and the ensemble
+
+:::{.callout-note}
+The mean function of a time series model is
+$$
+\mu (t) = E(X_t)
+$$
+The expectation represents an average taken across the ________________ of all possible time series that might have been produced by the time series model. 
+:::
+
+The plot below represents 100 simulated time series (blue) from a single population model (black). In practice, we write down a population-level model (black), and observe a single realization from the ensemble of all possible realizations from that model (i.e. one single blue time series).
+
+```{r, echo = F, fig.dim = c(8, 2.75), fig.align = "center"}
+set.seed(04022024)
+maxT <- 36
+nperiod <- 12
+multi_ts <- multi_rwd_wrapper(sim_lm(
+    maxT = maxT,
+    beta = c(4, -.025, 0),
+    sigma2 = 1,
+    ndat = 100,
+    period = nperiod,
+    si = c(0 * sin(2*pi/4), 2 * sin(2*pi/4), -1 * sin(2*pi/4), 0 * sin(2*pi/4)),
+    ci = c(0 * cos(2*pi/4), 2 * cos(2*pi/4), -1 * cos(2*pi/4), 0 * cos(2*pi/4)),
+    rho = .8
+))
+
+multi_ts %>%
+  ggplot() +
+  geom_line(
+    aes(x = factor(t), y = y, group = ndx),
+    # linetype = "dotdash",
+    color = "lightblue",
+    alpha = .5
+  ) +
+  geom_line(
+    data = multi_ts %>% 
+      group_by(t) %>% 
+      summarize(mean_y = mean(y)) %>%
+      mutate(ndx = 1),
+    aes(x = factor(t), y = mean_y, group = ndx)
+  ) + 
+  theme_bw() +
+  labs(x = "Time", y = "Simulated time series")
+```
+
+The concept of an ensemble of time series is no different than the idea of repeatedly sampling from an infinite population. The analagous figure might look like this:
+
+```{r, echo = F, fig.dim = c(8, 2.75), warning = F, message = F}
+# synthetic example
+population <- tibble(x = rbeta(1e6, 2, 5))
+samples <- replicate(100, expr = {
+  sample(population$x, 15)
+})
+
+# p1 <- population %>%
+#   ggplot() + 
+#   geom_density(aes(x = x)) +
+#   theme_bw() +
+#   labs(x = "Population")
+# 
+# p2 <- as_tibble(samples) %>%
+#   mutate(obs = 1:n()) %>%
+#   pivot_longer(V1:V100, names_to = "sample", values_to = "x") %>%
+#   ggplot() + 
+#   geom_density(aes(x = x, group = sample), alpha = .25, col = "lightblue") +
+#   theme_bw() +
+#   labs(x = "100 samples")
+# 
+# gridExtra::grid.arrange(p1, p2, nrow = 1)
+
+ggplot() +
+  geom_density(
+    data = as_tibble(samples) %>%
+      mutate(obs = 1:n()) %>%
+      pivot_longer(V1:V100, names_to = "sample", values_to = "x"),
+    aes(x = x, group = sample), alpha = .25, col = "lightblue"
+  ) +
+  geom_density(
+    data = population,
+    aes(x = x)
+  ) +
+  theme_bw() +
+  labs(
+    x = "Values in the population"
+  )
+
+```
+
+\newpage
+
+:::{.callout-note}
+A time series is _____________________ in the mean *if* the mean function is constant with respect to time.
+:::
+
+Do we expect the raw time series to be stationary in the mean? What about the residual error series?
+
+\vspace{1.5in}
+
+```{r, message = F, warning = F, fig.dim = c(8, 4.5), echo = F}
+data("AirPassengers")
+ap <- AirPassengers
+ap_decompose <- decompose(ap, "multiplicative")
+tbl <- tibble(
+  month = rep(1:12, 12),
+  year = rep(1949:1960, each = 12)
+) %>%
+  mutate(dt = ymd(paste(year, month, 1, sep = "-")))%>%
+  arrange(dt) %>%
+  mutate(
+    ap = c(ap),
+    ap_res = ap_decompose$random
+  ) 
+
+p1 <- tbl %>%
+  ggplot() +
+  geom_line(aes(x = dt, y = ap), col = "lightblue") +
+  theme_bw() +
+  labs(y = "Air passengers time series")
+p2 <- tbl %>%
+  ggplot() +
+  geom_line(aes(x = dt, y = ap_res), col = "lightblue") +
+  theme_bw() +
+  labs(y = "Residual error series") +
+  geom_hline(aes(yintercept = 1), linetype = "dotdash")
+gridExtra::grid.arrange(p1, p2, nrow = 2)
+```
+
+:::{.callout-note}
+A time series that is stationary in the mean is said to be __________________ in the mean *if* the sample mean tends to the ensemble mean as the length of the time series increases.
+$$
+\lim_{n\rightarrow\infty} \frac{\sum X_t}{n} = \mu
+$$
+In this class, we exclusively consider time series with residual error series that are ergodic in the mean. 
+:::
+

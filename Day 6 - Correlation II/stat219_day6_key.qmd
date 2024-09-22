@@ -1,0 +1,172 @@
+---
+title: "Day 6 - Correlation II"
+format:
+  pdf:
+    fontsize: 12pt
+    geometry:
+      - inner=1.5cm
+      - outer=1.5cm
+      - top=2.5cm
+      - bottom=2.5cm
+    include-in-header:
+      - text: |
+          \addtokomafont{disposition}{\rmfamily}
+          \usepackage{fancyhdr, lastpage, framed, caption, xcolor}
+          \captionsetup[figure]{labelformat=empty}
+          \pagestyle{fancyplain}
+          \fancyhf{}
+          \lhead{\fancyplain{}{STAT 0219: Time Series Analysis}}
+          \rhead{\fancyplain{}{Stratton - Day 6}}
+          \fancyfoot[RO, LE] {page \thepage\ of \pageref{LastPage}}
+          \thispagestyle{plain}
+editor: source
+---
+\vspace{-1in}
+
+## Introduction
+
+Today, we finish our discussion of correlation by introducing variance function, autocorrelation, and the correlogram. To guide our discussion of correlation, we will use a [data set](https://discover-mtdeq.hub.arcgis.com/datasets/7ff8441bb7014aa1b8a1da58f51c16db_0/explore?filters=eyJzaXRlbmFtZSI6WyJCb3plbWFuIl0sImRhdGV0aW1lIjpbMTUxNDUwNTEyOTUxNy40NywxNzI2OTg0ODAwMDAwXX0%3D&location=46.335398%2C-109.995100%2C7.00&showTable=true) describing the amount of PM2.5 in the air in Bozeman, Montana during September of 2020. It may be helpful to know that PM2.5 is defined as small particulate matter in the air measuring 2.5 micrometers or less in diameter, and that there was a significant fire immediately outside Bozeman that began on 2020-09-04. You can see more about the fire in this [YouTube video](https://www.youtube.com/watch?v=0VuPzpDxH1c&ab_channel=KBZKBozemanMTNews).
+
+:::{.callout-important}
+The raw data had 11 hours that were missing measurements. For this set of notes, I have imputed these values using time series techniques that we will cover later in the semester. 
+:::
+
+```{r, echo = T, warning = F, message = F}
+# packages
+library(tidyverse)
+
+# read in the .rds file that I created
+mt_pm_sept2020 <- readRDS("mt_pm25_sept2020.rds")
+
+# clean the data and construct a ts object
+mt_pm_clean <- mt_pm_sept2020 %>%
+  mutate(dt = ymd_hms(datetime)) %>%
+  dplyr::select(dt, rawvalue, everything()) %>%
+  arrange(dt)
+
+# create ts
+boz_pm_ts <- ts(
+  mt_pm_clean$rawvalue,
+  start = c(1, 5),
+  end = c(30, 5),
+  freq = 24
+)
+
+# decompose
+boz_pm_decomp <- decompose(boz_pm_ts, "additive")
+```
+
+\newpage
+
+## Variance functions, second-order stationarity, and autocorrelation
+
+:::{.callout-note}
+The variance function of a time series is
+$$
+\sigma^2(t) = E[(X_t - \mu)^2]
+$$
+
+Note that the variance function *could*, in principle, assume a different value at every time $t$. However, we cannot estimate a different variance at each time $t$ from a single time series. We therefore make some simplifying assumptions to proceed. If we assume the model is **stationary** in the variance ($\sigma^2(t) = \sigma^2$), we can estimate this quantity from the sample variance. 
+$$
+\hat{\sigma}^2 = s^2 = \frac{\sum (x_t - \bar{x})^2}{n-1}
+$$
+:::
+
+In addition to the mean function and variance function (**review:** which we typically assume to be stationary), what other quantities are of interest for time series analysis?
+
+\vspace{1.5in}
+
+:::{.callout-note}
+A model is considered ________________________________ *if* the correlation been observations of a time series depends only on the number of time steps separating them. If a model is ________________________________, we define the *autocovariance function (acvf)*, or $\gamma(k)$, as a function of the *lag* $k$
+$$
+\gamma(k) = E\left[(X_t - \mu) (X_{t+k} - \mu) \right]
+$$
+
+The lag $k$ *autocorrelation function (acf)*, or $\rho_k$, is defined by
+$$
+\rho_k = \frac{\gamma_k}{\sigma^2}
+$$
+
+The sample acvf, $c_k$, is calculated as
+$$
+c_k = \frac{1}{n}\sum_{t=1}^{n-k} (x_t - \bar{x})(x_{t+k} - \bar{x})
+$$
+and the sample acf, $r_k$, is
+$$
+r_k = \frac{c_k}{c_0}
+$$
+:::
+
+\newpage
+
+*Example*: With your classmates around you, work through the code provided below, which calculates the sample autocovariance and sample autocorrelation for the residual error series from the Bozeman air quality time series.
+
+```{r, fig.dim = c(8, 5)}
+# let R calculate the sample auto correlation, so that we have a target
+res <- na.omit(boz_pm_decomp$random) # why na.omit?
+boz_acf <- acf(res, lag.max = 20, plot = F)
+boz_acf_cov <- acf(res, type = "covariance", lag.max = 20, plot = F)
+c(boz_acf$acf)
+c(boz_acf_cov$acf)
+```
+
+```{r}
+# calculate by hand (which is tricky, focus on the general idea)
+# I will show a c0, c1, and c2 individually, then loop through the rest
+# c0 and r0 are easy :)
+n <- length(res)
+c0 <- (1/n) * sum((res - mean(res))*(res - mean(res)))
+r0 <- c0 / c0
+
+# c1 requires a lag of 1
+c1 <- (1/n) * sum((res - mean(res))[1:(n-1)] * (res[2:n] - mean(res)))
+r1 <- c1/c0
+
+# c2 requires a lag of 2
+c2 <- (1/n) * sum((res - mean(res))[1:(n-2)] * (res[3:n] - mean(res)))
+r2 <- c2/c0
+
+# now let's loop through the rest
+storage_matrix <- matrix(NA, nrow = 21, ncol = 2)
+storage_matrix[1:3, 1] <- c(c0, c1, c2)
+storage_matrix[1:3, 2] <- c(r0, r1, r2)
+for(t in 3:20){
+  ct <- (1/n) * sum((res - mean(res))[1:(n-t)] * (res[(t+1):n] - mean(res)))
+  rt <- ct / storage_matrix[1,1]
+  storage_matrix[t+1,1] <- ct
+  storage_matrix[t+1,2] <- rt
+}
+
+# compare
+byhand <- storage_matrix
+withr <- cbind(c(boz_acf_cov$acf), c(boz_acf$acf))
+cbind(byhand, withr)
+all(byhand - withr < 1e-6)
+```
+
+\newpage
+
+## The correlogram
+
+:::{.callout-note}
+The ______________________ is a plot of the sample autocorrelation, $r_k$, against the time lag, $k$. 
+:::
+
+```{r, fig.dim = c(8, 6.25)}
+acf(res, lag.max = 24)
+```
+
+A few notes on the correlogram:
+
+1. The x-axis defines the lag as a proportion of the seasonal frequency. 
+
+2. If $\rho_k = 0$, the sampling distribution of $r_k$ is approximately normal with mean of -1/$n$ and a variance of 1/$n$. The dotted lines on the correlogram are drawn at
+$$
+-\frac{1}{n} \pm \frac{2}{\sqrt{n}}
+$$
+
+   Why are the lines drawn at those values? Why should we be wary of using them to determine "statistical significance?"
+   
+   \vspace{5in}
+   
+3. The value for lag 0 will always be 1 (why?), and is included for comparison. We can use this value to help determine *practical significance*. Is the autocorrelation at lag 4 practically significant?
