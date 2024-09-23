@@ -58,6 +58,10 @@ boz_pm_decomp <- decompose(boz_pm_ts, "additive")
 
 \newpage
 
+![RIP to apple pen (c. 2021 - 2024), who passed quietly doing what they love; detailing the importance of stationarity in time series analysis. Gone but never forgotten.](rip_pen.png)
+
+\newpage
+
 ## Variance functions, second-order stationarity, and autocorrelation
 
 :::{.callout-note}
