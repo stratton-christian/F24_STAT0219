@@ -81,7 +81,7 @@ In addition to the mean function and variance function (**review:** which we typ
 \vspace{1.5in}
 
 :::{.callout-note}
-A model is considered ________________________________ *if* the correlation been observations of a time series depends only on the number of time steps separating them. If a model is ________________________________, we define the *autocovariance function (acvf)*, or $\gamma(k)$, as a function of the *lag* $k$
+A model is considered ________________________________ *if* the correlation between observations of a time series depends only on the number of time steps separating them. If a model is ________________________________, we define the *autocovariance function (acvf)*, or $\gamma(k)$, as a function of the *lag* $k$
 $$
 \gamma(k) = E\left[(X_t - \mu) (X_{t+k} - \mu) \right]
 $$
