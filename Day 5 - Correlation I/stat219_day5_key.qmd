@@ -55,7 +55,7 @@ The `lubridate` package features a function, `ymd_hms`, that parses dates of the
 ```{r, fig.dim = c(8, 8)}
 # clean up some columns
 mt_pm_clean <- mt_pm_sept2020 %>%
-  mutate(dt = ymd_hms(datetime)) %>%
+  mutate(dt = lubridate::ymd_hms(datetime)) %>%
   dplyr::select(dt, rawvalue, everything()) %>%
   arrange(dt)
 
@@ -268,7 +268,7 @@ tbl <- tibble(
   month = rep(1:12, 12),
   year = rep(1949:1960, each = 12)
 ) %>%
-  mutate(dt = ymd(paste(year, month, 1, sep = "-")))%>%
+  mutate(dt = lubridate::ymd(paste(year, month, 1, sep = "-")))%>%
   arrange(dt) %>%
   mutate(
     ap = c(ap),
