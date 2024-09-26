@@ -1,0 +1,73 @@
+---
+title: "Homework 3 - Question 2 explanation"
+format:
+  pdf:
+    fontsize: 12pt
+    geometry:
+      - inner=1.5cm
+      - outer=1.5cm
+      - top=2.5cm
+      - bottom=2.5cm
+    include-in-header:
+      - text: |
+          \addtokomafont{disposition}{\rmfamily}
+          \usepackage{fancyhdr, lastpage, framed, caption, xcolor}
+          \captionsetup[figure]{labelformat=empty}
+          \pagestyle{fancyplain}
+          \fancyhf{}
+          \lhead{\fancyplain{}{STAT 0219: Time Series Analysis}}
+          \rhead{\fancyplain{}{Stratton - HW2}}
+          \fancyfoot[RO, LE] {page \thepage\ of \pageref{LastPage}}
+          \thispagestyle{plain}
+editor: source
+---
+<!-- Note: the YAML header is everything above this line. -->
+\vspace{-3in}
+\textbf{Name:} Your name here  
+\textbf{Due:} 2024/09/30
+\vspace{1.5in}
+
+Be sure to submit **both** the .pdf and .qmd file to Canvas by Monday, September 30th at 11:59 pm. 
+
+```{r, include = F}
+rm(list = ls())
+library(tidyverse)
+```
+
+2. [1 pt] The code below creates a time series out of the same seven values on repeat, and generates a correlogram for that series. Describe what is happening in the correlogram at time lags that are a multiple of seven. Why should that make sense?
+
+```{r, indent = "   ", fig.dim = c(6, 4)}
+ex_ts <- ts(
+  rep(-3:3, 8),
+  start = c(1,1),
+  end = c(8, 7),
+  freq = 7
+)
+acf(ex_ts)
+```
+
+   :::{.callout-warning icon=false appearance="simple"}
+   Observations that are seven time points apart are *identical*, so the correlation is extremely close to 1. This is one way to diagnose unaccounted for seasonal variability! You would expect to see large spikes in the ACF plot corresponding to the seasonal frequency. We can also use the definition of the sample autocorrelation to understand this particular ACF plot, and why the autocorrelation at lag 7 and 14 are so large, but not 0, despite finding the autocorrelation between two identical sequences of numbers. (Hint - it again comes back to dividing by $n$)
+   :::
+
+```{r, indent = "   "}
+# to calculate the lag 7 auto correlation
+# we need (1/n) * sum (x_t - xbar) * (x_{t+7} - xbar)
+# we then divide that quantity by 
+
+# first, x_t
+ex_ts[1:(length(ex_ts)-7)]
+
+# now x_{t+7}
+ex_ts[8:length(ex_ts)]
+
+1/length(ex_ts) * sum((ex_ts[1:(length(ex_ts)-7)]  - mean(ex_ts))* (ex_ts[8:length(ex_ts)] - mean(ex_ts[1:(length(ex_ts)-7)] )))
+
+
+
+# with R
+ex_acf <- acf(ex_ts, plot = F, type = "covariance")
+```
+
+
+
