@@ -23,7 +23,7 @@ editor: source
 ---
 <!-- Note: the YAML header is everything above this line. -->
 \vspace{-3in}
-\textbf{Name:} Your name here  
+\textbf{Name:} Christian   
 \textbf{Due:} 2024/09/30
 \vspace{1.5in}
 
@@ -47,27 +47,91 @@ acf(ex_ts)
 ```
 
    :::{.callout-warning icon=false appearance="simple"}
-   Observations that are seven time points apart are *identical*, so the correlation is extremely close to 1. This is one way to diagnose unaccounted for seasonal variability! You would expect to see large spikes in the ACF plot corresponding to the seasonal frequency. We can also use the definition of the sample autocorrelation to understand this particular ACF plot, and why the autocorrelation at lag 7 and 14 are so large, but not 0, despite finding the autocorrelation between two identical sequences of numbers. (Hint - it again comes back to dividing by $n$)
+   Observations that are seven time points apart are *identical*, so the correlation is extremely close to 1 (but not equal? See why below). This is one way to diagnose unaccounted for seasonal variability! You would expect to see large spikes in the ACF plot corresponding to the seasonal frequency.
+   :::
+   
+    ***
+   
+   :::{.callout-warning icon=false appearance="simple"}
+   So then why isn't the spike at lag 7 and lag 14 exactly equal to 1? Or, if that doesn't surprise you, why *is* it surprising that the autocorrelation at lag 7 and lag 14 are not equal to 1? First, let us look at the raw time series, $\{x_t\}$, and lagged series at 7 and 14, $\{x_{t+7}\}$ and $\{x_{t+14}\}$. Note that they are exactly equivalent. 
+   :::
+   
+```{r, indent = "   "}
+knitr::kable(
+  tibble(
+    xt = c(ex_ts),
+    xtp7 = c(rep(NA, 7), ex_ts[8:length(ex_ts)]),
+    xtp14 = c(rep(NA, 14), ex_ts[15:length(ex_ts)])
+  )
+)
+
+```
+
+   :::{.callout-warning icon=false appearance="simple"}
+   Our first thought might be to calculate the correlation between each of these series using the `cor` function. 
+   :::
+   
+```{r, indent = "   "}
+# x_t and x_{t+7}
+cor(ex_ts[1:(length(ex_ts)-7)], ex_ts[8:length(ex_ts)])
+
+# x_t and x_{t+14}
+cor(ex_ts[1:(length(ex_ts)-14)], ex_ts[15:length(ex_ts)])
+```
+
+   :::{.callout-warning icon=false appearance="simple"}
+   So what gives? Why does the ACF plot not have these spikes at 1 for lags 7 and 14? Recall that *correlation* between variables $x$ and $y$ is calculated as $r = \frac{1}{(n-1)s_xs_y} \sum (x_i - \bar{x})(y_i - \bar{y})$ where $s_x$ and $s_y$ are the standard deviations, and the $n-1$ is computed based on the length of each series. This is demonstrated for $\{x_t\}$ and $\{x_{t+7}\}$ below.
    :::
 
 ```{r, indent = "   "}
-# to calculate the lag 7 auto correlation
-# we need (1/n) * sum (x_t - xbar) * (x_{t+7} - xbar)
-# we then divide that quantity by 
+# lets make some vectors to simplify our life
+xt <- ex_ts[1:(length(ex_ts)-7)]
+xtp7 <- ex_ts[8:length(ex_ts)]
 
-# first, x_t
-ex_ts[1:(length(ex_ts)-7)]
+# this is the "n"
+length(xt);length(xtp7)
 
-# now x_{t+7}
-ex_ts[8:length(ex_ts)]
+# lets calculate it
+## standard deviations first
+s1 <- sd(xt)
+s2 <- sd(xtp7)
 
-1/length(ex_ts) * sum((ex_ts[1:(length(ex_ts)-7)]  - mean(ex_ts))* (ex_ts[8:length(ex_ts)] - mean(ex_ts[1:(length(ex_ts)-7)] )))
-
-
-
-# with R
-ex_acf <- acf(ex_ts, plot = F, type = "covariance")
+# calculate NORMAL CORRELATION
+1/((length(xt)-1)*s1*s2) * sum((xt - mean(xt)) * (xtp7 - mean(xtp7)))
 ```
 
 
+   :::{.callout-warning icon=false appearance="simple"}
+   Indeed, the correlation between $\{x_t\}$ and $\{x_{t+7}\}$ *is* 1. But what about the *autocorrelation*? Recall that the autocorrelation is calculated as $r_k = \frac{1}{n c_0} \sum (x_t - \bar{x})(x_{t+k} - \bar{x})$, where $c_0 = \frac{1}{n}\sum (x_t - \bar{x})^2$ is the auto covariance at lag 0. 
+   :::
 
+```{r, indent = "   "}
+# lets make some vectors to simplify our life
+xt <- ex_ts[1:(length(ex_ts)-7)]
+xtp7 <- ex_ts[8:length(ex_ts)]
+
+# for autocorrelation, we use the length of the total series as n
+# and the variance of the total series for s^2
+n <- length(ex_ts)
+s2 <- var(ex_ts)
+xbar <- mean(ex_ts)
+
+# calculate NORMAL CORRELATION
+c0 <- (1/n) * sum((ex_ts - xbar) * (ex_ts - xbar))
+1/(n*c0) * sum((xt - xbar) * (xtp7 - xbar))
+```
+
+   :::{.callout-warning icon=false appearance="simple"}
+   So what is the takeaway? Even though $\{x_t\}$ and $\{x_{t+7}\}$ are perfectly *correlated*, their *autocorrelation* is less than 1, because we calculate autocorrelation based on summaries of the entire time series ($n, c_0, \bar{x}$). This results in an autocorrelation of less than 1 when we compare a series to a $k$-lagged version of itself, which is $k$ time points shorter. We can verify these calculations by looking at the output of `acf`.
+   :::
+
+```{r, indent = "   "}
+# lets make some vectors to simplify our life
+tmp <- acf(ex_ts, plot = F)
+knitr::kable(
+  tibble(
+    lag = 0:(length(c(tmp$acf))-1),
+    acf = c(tmp$acf)
+  )
+)
+```
