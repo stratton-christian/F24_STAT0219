@@ -1,0 +1,119 @@
+---
+title: "Homework 4"
+format:
+  pdf:
+    fontsize: 12pt
+    geometry:
+      - inner=1.5cm
+      - outer=1.5cm
+      - top=2.5cm
+      - bottom=2.5cm
+    include-in-header:
+      - text: |
+          \addtokomafont{disposition}{\rmfamily}
+          \usepackage{fancyhdr, lastpage, framed, caption, xcolor}
+          \captionsetup[figure]{labelformat=empty}
+          \pagestyle{fancyplain}
+          \fancyhf{}
+          \lhead{\fancyplain{}{STAT 0219: Time Series Analysis}}
+          \rhead{\fancyplain{}{Stratton - HW4}}
+          \fancyfoot[RO, LE] {page \thepage\ of \pageref{LastPage}}
+          \thispagestyle{plain}
+editor: source
+---
+<!-- Note: the YAML header is everything above this line. -->
+\vspace{-3in}
+\textbf{Name:} Your name here  
+\textbf{Due:} 2024/10/07
+\vspace{1.5in}
+
+Be sure to submit **both** the .pdf and .qmd file to Canvas by Monday, October 7th at 11:59 pm. 
+
+```{r, include = F}
+rm(list = ls())
+library(tidyverse)
+```
+
+0. [1 pt] With whom did you work on this assignment?
+
+   :::{.callout-warning icon=false appearance="simple"}
+   
+   :::
+
+1. [pt] We will focus on a [data set](https://www.kaggle.com/datasets/neuromusic/avocado-prices) describing weekly avocado sales volume and price in the United States between 2015 and 2018 for this question. 
+
+   a) [1 pt] Read the data in (naming it `avocado`) and filter to sales of conventional avocados in `SanFrancisco`. 
+
+```{r, indent = "      ", message = F, warning = F}
+# load the data, sort by date and filter to conventional sales in San Fran
+avocado <- readr::read_csv("avocado.csv") %>%
+  arrange(Date) %>%
+  filter(
+    region == "SanFrancisco",
+    type == "conventional"
+  )
+```
+
+   b) [2 pt] Create a `ts` object with the `AveragePrice` vector (called `avo_ts`) and plot the series. 
+   
+      :::{.callout-tip}
+      Be sure to pay attention to how the data set is arranged with respect to date. Additionally, **do not** specify an end date. This is one way to handle the fact that there are 53 Sundays in 2017 (omitting an end date forces R to treat the week that begins on 12/31/2017 as the first week of 2018).
+      :::
+   
+```{r, indent = "      ", fig.dim = c(6, 4), message = F}
+# construct weekly ts
+avo_ts <- ts(
+  avocado$AveragePrice,
+  start = with(avocado, c(year(Date[1]), week(Date[1]))),
+  freq = 52
+)
+
+# plot
+tibble(
+  price = avo_ts,
+  time = time(avo_ts)
+) %>%
+  ggplot(aes(x = time, y = price)) +
+  geom_line() +
+  theme_bw()
+```
+
+   c) [2 pt] Describe the series in terms of trend and seasonality. Decomposing the series might help.  
+
+      :::{.callout-warning icon=false appearance="simple"}
+      There is evidence of a positive trend over time, with some seasonality to the prices. In particular, prices seem to drop in winter. 
+      :::
+   
+```{r, indent = "      ", fig.dim = c(6, 5), message = F}
+# construct weekly ts
+plot(decompose(avo_ts))
+```
+
+
+   d) [1 pt] Create a reduced version of the `avo_ts` time series, called `avo_ts_red`, that only spans 2015 to 2017. 
+   
+```{r, indent = "      ", fig.dim = c(6, 5), message = F}
+avo_ts_red <- window(
+  avo_ts,
+  start = c(2015, 1),
+  end = c(2017, 52)
+)
+```
+
+   e) [1 pt] Fit an additive Holt-Winters model, called `avo_hw1`, to the reduced time series and allow R to estimate the smoothing parameters. 
+   
+```{r, indent = "      ", fig.dim = c(6, 5), message = F}
+avo_hw1 <- HoltWinters(
+  avo_ts_red
+)
+```
+
+   f) [1 pt] Create an object, called `avo_hw1_pred`, that predicts the first 13 weeks of 2018 and include prediction intervals. 
+   
+```{r, indent = "      ", fig.dim = c(6, 5), message = F}
+avo_hw1_pred <- predict(
+  avo_hw1,
+  n.ahead = 13,
+  prediction.interval = TRUE
+)
+```
