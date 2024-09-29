@@ -89,7 +89,6 @@ tibble(
 plot(decompose(avo_ts))
 ```
 
-
    d) [1 pt] Create a reduced version of the `avo_ts` time series, called `avo_ts_red`, that only spans 2015 to 2017. 
    
 ```{r, indent = "      ", fig.dim = c(6, 5), message = F}
