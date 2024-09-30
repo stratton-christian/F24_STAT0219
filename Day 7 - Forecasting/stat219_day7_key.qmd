@@ -32,6 +32,7 @@ To guide our discussion, we will use a [data set](https://raw.githubusercontent.
 ```{r, echo = T, warning = F, message = F}
 # packages
 library(tidyverse)
+library(lubridate)
 
 # read table from the web
 www <- "https://raw.githubusercontent.com/prabeshdhakal/Introductory-Time-Series-with-R-Datasets/refs/heads/master/ApprovActiv.dat"
@@ -266,5 +267,8 @@ bind_rows(
   theme_bw()
 ```
 
-
+```{r}
+log_ap_hw2_pred <- predict(log_ap_hw2, n.ahead = 10, prediction.interval = TRUE)
+log_ap_hw2_pred
+```
 

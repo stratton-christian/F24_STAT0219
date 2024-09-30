@@ -32,6 +32,7 @@ Be sure to submit **both** the .pdf and .qmd file to Canvas by Monday, September
 ```{r, include = F}
 rm(list = ls())
 library(tidyverse)
+library(lubridate)
 ```
 
 0. [1 pt] With whom did you work on this assignment?
