@@ -128,7 +128,7 @@ for $k \leq p$. To fit the Holt-Winters model in R, we use the `HoltWinters` fun
 
 \newpage
 
-## Examples
+## Air Passengers example
 
 The code below creates a time series that excludes the last four years of the `AirPassengers` data. Fit a multiplicative Holt-Winters model to the reduced series and forecast four years into the future. Compare this forecast to the actual data from those four years. 
 
@@ -172,9 +172,51 @@ Fit another Holt-Winters model to `ap_red` time series, this time forcing $\alph
 
 \newpage
 
+## Avocados example
+
+The code below creates a complete and reduced time series of conventional avocado prices in San Francisco. Fit two Holt-Winters models to the reduced time series: one that allows R to estimate the smoothing parameters, and one that sets the parameters to .2. Plot the results and comment on the quality of the forecasts from both models. 
+
+```{r, fig.dim = c(7, 5), message = F, warning = F}
+# load the data, sort by date and filter to conventional sales in SF
+avocado <- readr::read_csv("avocado.csv") %>%
+  arrange(Date) %>%
+  filter(
+    region == "SanFrancisco",
+    type == "conventional"
+  )
+
+# complete ts
+avo_ts <- ts(
+  avocado$AveragePrice,
+  start = with(avocado, c(year(Date[1]), week(Date[1]))),
+  freq = 52
+)
+
+# reduced to test the model
+avo_ts_red <- window(
+  avo_ts,
+  start = c(2015, 1),
+  end = c(2017, 52)
+)
+```
+
+```{r, fig.dim = c(7, 5), message = F, warning = F}
+# first model
+
+```
+
+```{r, fig.dim = c(7, 5), message = F, warning = F}
+# new model
+
+```
+
+\newpage
+
 ## Key takeaways
 
 - The Holt-Winters method is far more flexible than exponential smoothing, allowing for forecasting with series that contain trends and seasonality. 
+
+- Holt-Winters, and other exponential smoothing procedures, can be slow to respond to changes in a series, particularly if the series are long.
 
 - The way that R estimates the smoothing parameters for the Holt-Winters method can sometimes result in **overfitting** of the model to an observed time series, particularly if the series is longer and contains clear trend and seasonality. Setting the smoothing parameters to fixed values can *sometimes* result in better forecasting results, and 0.2 often performs well in particular. 
 

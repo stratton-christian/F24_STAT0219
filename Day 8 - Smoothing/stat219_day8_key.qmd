@@ -165,7 +165,7 @@ for $k \leq p$. To fit the Holt-Winters model in R, we use the `HoltWinters` fun
 
 \newpage
 
-## Examples
+## Air Passengers example
 
 The code below creates a time series that excludes the last four years of the `AirPassengers` data. Fit a multiplicative Holt-Winters model to the reduced series and forecast four years into the future. Compare this forecast to the actual data from those four years. 
 
@@ -282,9 +282,125 @@ diffs <- window(
 sum(diffs^2)
 ```
 
+\newpage
+
+## Avocados example
+
+The code below creates a complete and reduced time series of conventional avocado prices in San Francisco. Fit two Holt-Winters models to the reduced time series: one that allows R to estimate the smoothing parameters, and one that sets the parameters to .2. Plot the results and comment on the quality of the forecasts from both models. 
+
+```{r, fig.dim = c(7, 5), message = F, warning = F}
+# load the data, sort by date and filter to conventional sales in SF
+avocado <- readr::read_csv("avocado.csv") %>%
+  arrange(Date) %>%
+  filter(
+    region == "SanFrancisco",
+    type == "conventional"
+  )
+
+# complete ts
+avo_ts <- ts(
+  avocado$AveragePrice,
+  start = with(avocado, c(year(Date[1]), week(Date[1]))),
+  freq = 52
+)
+
+# reduced to test the model
+avo_ts_red <- window(
+  avo_ts,
+  start = c(2015, 1),
+  end = c(2017, 52)
+)
+```
+
+```{r, fig.dim = c(7, 5), message = F, warning = F}
+# first model
+avo_hw1 <- HoltWinters(
+  avo_ts_red
+)
+avo_hw1_pred <- predict(
+  avo_hw1,
+  n.ahead = 13,
+  prediction.interval = TRUE
+)
+bind_rows(
+  tibble(
+    time = time(avo_ts),
+    val = c(avo_ts)
+  ) %>% mutate(type = "obs"),
+  bind_rows(
+    tibble(
+      time = time(avo_hw1$fitted[,1]),
+      val = c(avo_hw1$fitted[,1])
+    ),
+    tibble(
+      time = time(avo_hw1_pred),
+      val = c(avo_hw1_pred[,1]),
+      lwr = c(avo_hw1_pred[,3]),
+      upr = c(avo_hw1_pred[,2])
+    )
+  )  %>% mutate(type = "pred")
+) %>%
+  ggplot(aes(x = time, y = val, col = type)) + 
+  geom_line() +
+  geom_ribbon(
+    aes(ymin = lwr, ymax = upr), 
+    linetype = 2,
+    alpha = 0.1
+  ) + 
+  theme_bw()
+```
+
+```{r, fig.dim = c(7, 5), message = F, warning = F}
+# new model
+avo_hw2 <- HoltWinters(
+  avo_ts_red,
+  alpha = .2,
+  beta = .2,
+  gamma = .2
+)
+
+# prediction
+avo_hw2_pred <- predict(
+  avo_hw2,
+  n.ahead = 13,
+  prediction.interval = TRUE
+)
+
+# plot
+bind_rows(
+  tibble(
+    time = time(avo_ts),
+    val = c(avo_ts)
+  ) %>% mutate(type = "obs"),
+  bind_rows(
+    tibble(
+      time = time(avo_hw2$fitted[,1]),
+      val = c(avo_hw2$fitted[,1])
+    ),
+    tibble(
+      time = time(avo_hw2_pred),
+      val = c(avo_hw2_pred[,1]),
+      lwr = c(avo_hw2_pred[,3]),
+      upr = c(avo_hw2_pred[,2])
+    )
+  )  %>% mutate(type = "pred")
+) %>%
+  ggplot(aes(x = time, y = val, col = type)) + 
+  geom_line() +
+  geom_ribbon(
+    aes(ymin = lwr, ymax = upr), 
+    linetype = 2,
+    alpha = 0.1
+  ) + 
+  theme_bw()
+```
+
+
 ## Key takeaways
 
 - The Holt-Winters method is far more flexible than exponential smoothing, allowing for forecasting with series that contain trends and seasonality. 
+
+- Holt-Winters, and other exponential smoothing procedures, can be slow to respond to changes in a series, particularly if the series are long.
 
 - The way that R estimates the smoothing parameters for the Holt-Winters method can sometimes result in **overfitting** of the model to an observed time series, particularly if the series is longer and contains clear trend and seasonality. Setting the smoothing parameters to fixed values can *sometimes* result in better forecasting results, and 0.2 often performs well in particular. 
 
