@@ -69,6 +69,7 @@ Fit an exponential smoothing model to the `boz_ts_red` series, and use the model
 ```{r, fig.dim = c(6, 4), warning = F}
 hw <- HoltWinters(
   boz_ts_red,
+  alpha = .2,
   beta = FALSE,
   gamma = FALSE
 )
@@ -239,9 +240,7 @@ Fit another Holt-Winters model to `ap_red` time series, this time forcing $\alph
 hw2 <- HoltWinters(
   ap_red,
   seasonal = "mult",
-  alpha = .2,
-  beta = .2,
-  gamma = .2
+  alpha = .2
 )
 hw_pred2 <- predict(hw2, n.ahead = 4*12, prediction.interval = TRUE)
 
@@ -274,6 +273,7 @@ bind_rows(
   theme_bw() +
   geom_vline(aes(xintercept = 1957))
 
+# finds the squared difference between forecast and observed
 diffs <- window(
   ap_full,
   start = c(1957, 1),
