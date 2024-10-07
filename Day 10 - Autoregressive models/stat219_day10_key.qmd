@@ -1,0 +1,163 @@
+---
+title: "Day 10 - Autoregressive models"
+format:
+  pdf:
+    fontsize: 12pt
+    geometry:
+      - inner=1.5cm
+      - outer=1.5cm
+      - top=2.5cm
+      - bottom=2.5cm
+    include-in-header:
+      - text: |
+          \addtokomafont{disposition}{\rmfamily}
+          \usepackage{fancyhdr, lastpage, framed, caption, xcolor, setspace}
+          \captionsetup[figure]{labelformat=empty}
+          \pagestyle{fancyplain}
+          \fancyhf{}
+          \lhead{\fancyplain{}{STAT 0219: Time Series Analysis}}
+          \rhead{\fancyplain{}{Stratton - Day 10}}
+          \fancyfoot[RO, LE] {page \thepage\ of \pageref{LastPage}}
+          \thispagestyle{plain}
+editor: source
+---
+\vspace{-1in}
+
+## Introduction
+
+We continue our discussion of basic stochastic models, introducing the generating autoregressive model of order $p$.
+
+```{r, echo = T, warning = F, message = F}
+# packages
+library(tidyverse)
+library(lubridate)
+```
+
+\newpage
+
+## Autoregressive models
+
+:::{.callout-note}
+A time series $\{x_t\}$ is an ___________________________________ or AR($p$) if
+$$
+x_t = \alpha_1 x_{t-1} + \alpha_2x_{t-2}+ \dots + \alpha_px_{t-p}+w_t
+$$
+where $\{w_t\}$ is white noise and the $\alpha_i$ are the model parameters. It can be shown that the AR($p$) model can be expressed as a polynomial of order $p$ in the backshift operator:
+$$
+\theta_p(\boldsymbol{B})x_t = (1 - \alpha_1 \boldsymbol{B} - \alpha_2\boldsymbol{B}^2 - \dots - \alpha_p\boldsymbol{B}^p)x_t = w_t
+$$
+:::
+
+A few notes on AR($p$) models:
+
+- The __________________________ is a special case of AR(1) with $\alpha_1 = 1$.
+
+\vspace{1in}
+
+- The __________________________________ model is a special case of an AR process with $\alpha_i = \alpha(1 - \alpha)^i$ as $p$ approaches infinity. 
+
+\vspace{1in}
+
+- A prediction at time $t$ is given by 
+$$
+\hat{x}_t = \hat{\alpha}_1x_{t-1} + \hat{\alpha}_2x_{t-2} + \dots + \hat{\alpha}_px_{t-p}
+$$
+- Model parameters are estimated by minimizing the _________________________. 
+
+\vspace{1in}
+
+Is an AR($p$) process stationary?
+
+
+\newpage
+
+\doublespacing
+:::{.callout-note}
+The equation $\theta_p(\boldsymbol{B}) = 0$ is called the ___________________________. The roots of the _________________________ may be used to determine whether an AR($p$) process is stationary. 
+
+If all roots of the ___________________________ exceed 1 in magnitude, the model is stationary. You may use the `polyroot` function in R to find the roots of polynomials. 
+:::
+\singlespacing
+
+*Example:* Determine whether the AR(1) model $x_t = \frac{1}{2}x_{t-1} + w_t$ is stationary. 
+
+\vspace{2in}
+
+*Example:* Determine whether the AR(2) model $x_t = x_{t-1} -\frac{1}{4}x_{t-2} + w_t$ is stationary. 
+
+\vspace{2in}
+
+*Example:* Determine whether the AR(2) model $x_t = \frac{1}{2}x_{t-1} -\frac{1}{2}x_{t-2} + w_t$ is stationary. 
+
+\newpage
+
+:::{.callout-note title="AR(1) processes"}
+A time series $x_t$ is an AR(1) process if
+
+\vspace{.5in}
+
+The second-order properties of an AR(1) process are:
+$$
+\begin{split}
+\mu(t) &= 0 \\
+\gamma_k &= \frac{\alpha^k\sigma^2}{(1-\alpha^2)} \\
+\rho_k &= \alpha^k
+\end{split}
+$$
+:::
+
+How can we simulate an AR(1) process?
+
+```{r, fig.dim = c(7, 4.5)}
+set.seed(10062024)
+x <- w <- rnorm(1000)
+for(t in 2:1000) x[t] <- 0.7 * x[t-1] + w[t]
+par(mfrow = c(1, 2))
+plot(x, type = "l", xlab = "Time")
+acf(x)
+```
+
+\newpage
+
+:::{.callout-note}
+The ___________________________________ at lag $k$ is the correlation that results after removing the effect of any correlation due to terms at shorter lags. 
+:::
+
+```{r, fig.dim = c(6, 7)}
+par(mfrow = c(2, 1))
+plot(x, type = "l", xlab = "Time")
+pacf(x)
+```
+
+\newpage
+
+:::{.callout-note title="Fitting an AR(p) process"}
+To fit an AR($p$) process, we use the `ar` function in R. To select the order of the AR process, R minimizes the AIC. 
+$$
+AIC = 2 \cdot (-\text{log-likelihood} + \text{number of parameters})
+$$
+:::
+
+```{r, fig.dim = c(6, 4)}
+par(mfrow = c(1,1))
+ar_fit <- ar(x)
+str(ar_fit)
+ar_fit$aic
+predict(ar_fit, n.ahead = 10)
+acf(na.omit(ar_fit$resid))
+```
+
+\newpage
+
+## Closing remarks
+
+- The stochastic models discussed this week (white noise, random walks, and AR($p$) processes) are not very useful for forecasting on their own, and are unlikely to compete with procedures like Holt-Winters. 
+
+- In practice, these stochastic models are combined with other techniques (regression, moving average, and integrated moving averages) to construct powerful forcasting techniques. 
+
+- The AR($p$) process is one component of the ARIMA model, which we will discuss towards the end of the semester. 
+
+
+
+
+

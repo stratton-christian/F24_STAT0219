@@ -1,0 +1,245 @@
+---
+title: "Day 9 - White noise and random walks"
+format:
+  pdf:
+    fontsize: 12pt
+    geometry:
+      - inner=1.5cm
+      - outer=1.5cm
+      - top=2.5cm
+      - bottom=2.5cm
+    include-in-header:
+      - text: |
+          \addtokomafont{disposition}{\rmfamily}
+          \usepackage{fancyhdr, lastpage, framed, caption, xcolor, setspace}
+          \captionsetup[figure]{labelformat=empty}
+          \pagestyle{fancyplain}
+          \fancyhf{}
+          \lhead{\fancyplain{}{STAT 0219: Time Series Analysis}}
+          \rhead{\fancyplain{}{Stratton - Day 7}}
+          \fancyfoot[RO, LE] {page \thepage\ of \pageref{LastPage}}
+          \thispagestyle{plain}
+editor: source
+---
+\vspace{-1in}
+
+```{r, include = F}
+rm(list = ls())
+```
+
+## Introduction
+
+Last week, we introduced the Holt-Winters filter, a model that is capable of estimating a time series with trend and seasonal components. However, sometimes the Holt-Winters model is not able to capture the serial correlation present in the data, resulting in left-over serial correlation in the *residual error series*.  In order to capture serial correlation in the residual error series, we need to build more complicated models by combining time series techniques used for the mean and error structure of the series. This week, we begin considering basic stochastic models for time series, including: white noise, random walks, and autoregressive models. 
+
+To guide our discussion, we will use a [data set](https://www.kaggle.com/datasets/bobnau/daily-website-visitors?resource=download) describing the number of visits to a website for a statistics course at Duke University, called Statistical Forecasting. The data set contains daily counts of the number of visits to the website between 2014 and 2020. 
+
+```{r, echo = T, warning = F, message = F}
+# packages
+library(tidyverse)
+library(lubridate)
+
+# read table from the web
+web <- read_csv("daily-website-visitors.csv")
+```
+
+***
+
+\newpage
+
+## Review
+
+Construct a time series of the daily unique visits to the website in the year of 2017, then fit a Holt-Winters model to the data and plot the resulting model. Then create an ACF plot of the residual error series and comment on what you see. 
+
+:::{.callout-tip}
+You can use the `resid` function on a Holt-Winters model to obtain the residual error series.
+:::
+
+```{r, warning = F, message = F, fig.dim = c(7, 4)}
+web2017 <- web %>%
+  mutate(dt = mdy(Date)) %>%
+  filter(year(dt) == 2017) %>%
+  arrange(dt)
+
+web_ts <- ts(
+  web2017$Unique.Visits,
+  start = c(1,1),
+  freq = 7
+)
+
+hw <- HoltWinters(web_ts)
+plot(hw)
+
+acf(resid(hw))
+```
+
+\newpage
+
+\doublespacing
+:::{.callout-note}
+A time series $\{w_t: t = 1,2,\dots, n\}$ is called _______________________ (DWN) if the variables $w_1, w_2, \dots, w_n$ are _________________ and ________________ distributed with a mean of ___________.
+
+If the variables also follow a normal distribution, the series is called  
+_______________________________. 
+$$
+w_t \sim N(0, \sigma^2)
+$$
+:::
+\singlespacing
+
+:::{.callout-note title="Second-order properties"}
+$$
+\begin{split}
+\mu(t) &= 0 \\
+\gamma_k = \text{Cov}(w_t, w_{t+k}) &= 
+\begin{cases} 
+\sigma^2 & k=0 \\
+0 & k\neq0
+\end{cases} \\
+\rho_k &= \begin{cases}
+1 & k = 0 \\
+0 & k \neq 0
+\end{cases}
+\end{split}
+$$
+:::
+
+How can we simulate Gaussian white noise?
+
+\vspace{1in}
+
+```{r, fig.dim = c(7, 9)}
+set.seed(10062024)
+par(mfrow = c(3, 2))
+for(i in 1:3) {
+  tmp <- rnorm(100)
+  plot(
+    tmp, type = "l",
+    xlab = "Time"
+  )
+  abline(h = 0, lty = 2)
+  acf(tmp)
+}
+```
+
+\newpage
+
+## Random walks
+
+\doublespacing
+:::{.callout-note}
+A time series $\{x_t\}$ is a _____________________________ if
+$$
+x_t = x_{t-1} + w_t
+$$
+where $w_t$ is discrete white noise. It can be shown that 
+$$
+x_t = w_t + w_{t-1} + w_{t-2} + \dots
+$$
+:::
+\singlespacing
+
+:::{.callout-note title="Second-order properties"}
+$$
+\begin{split}
+\mu(t) &= 0 \\
+\gamma_k(t) = \text{Cov}(x_t, x_{t+k}) &= t\sigma^2 \\
+\rho_k(t) = \frac{\text{Cov}(x_t, x_{t+k})}{\sqrt{\text{Var}(x_t)\text{Var}(x_{t+k})}} &= \frac{t\sigma^2}{\sqrt{t\sigma^2(t+k)\sigma^2}} = \frac{1}{\sqrt{1+k/t}}
+\end{split}
+$$
+:::
+
+How can we simulate a random walk?
+
+```{r, fig.dim = c(7, 9)}
+set.seed(10062024)
+par(mfrow = c(3, 2))
+for(i in 1:3) {
+  x <- w <- rnorm(500)
+  for(t in 2:500) x[t] <- x[t-1] + w[t]
+  plot(x, type = "l", xlab = "Time")
+  abline(h = 0, lty = 2)
+  acf(x)
+}
+```
+
+\newpage
+
+```{r, fig.dim = c(7, 6)}
+set.seed(10062024)
+par(mfrow = c(2, 2))
+for(i in 1:2) {
+  # generate random walk
+  x <- w <- rnorm(500)
+  for(t in 2:500) x[t] <- x[t-1] + w[t]
+  
+  # first order difference
+  x_dif <- diff(x)
+  plot(x_dif, type = "l", xlab = "Time")
+  abline(h = 0, lty = 2)
+  acf(x_dif)
+}
+```
+
+
+:::{.callout-note title="Backshift operators"}
+The backward shift operator $\boldsymbol{B}$ is defined by
+$$
+\boldsymbol{B}x_t = x_{t-1}
+$$
+and 
+$$
+\boldsymbol{B}^nx_t = x_{t-n}
+$$
+which provides a convenient way to express autoregressive series.
+:::
+
+*Example:* Express the random walk model in terms of the backshift operator. 
+
+\newpage
+
+## Random walk with drift
+
+\doublespacing
+:::{.callout-note}
+A time series $\{x_t\}$ is a _____________________________ if
+$$
+x_t = x_{t-1} + \delta + w_t
+$$
+where $w_t$ is white noise.
+:::
+\singlespacing
+
+```{r, fig.dim = c(7, 5)}
+set.seed(10062024)
+par(mfrow = c(1,1))
+# generate random walk with drift
+x <- w <- rnorm(500)
+for(t in 2:500) x[t] <- x[t-1] + .10 + w[t]
+
+plot(x, xlab = "Time", type = "l")
+```
+
+
+\newpage
+
+```{r,  fig.dim = c(7, 8)}
+set.seed(10062024)
+par(mfrow = c(2, 2))
+# generate random walk with drift
+x <- w <- rnorm(500)
+for(t in 2:500) x[t] <- x[t-1] + .5 + w[t]
+
+# first order difference - notice the mean
+x_dif <- diff(x)
+mean(x_dif)
+plot(x_dif, type = "l", xlab = "Time")
+abline(h = 0, lty = 2)
+acf(x_dif)
+
+# we can fix that
+x_dif_centered <- x_dif - mean(x_dif)
+plot(x_dif_centered, type = "l", xlab = "Time")
+abline(h = 0, lty = 2)
+acf(x_dif_centered)
+```
+

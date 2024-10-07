@@ -1,0 +1,143 @@
+---
+title: "Homework 5"
+format:
+  pdf:
+    fontsize: 12pt
+    geometry:
+      - inner=1.5cm
+      - outer=1.5cm
+      - top=2.5cm
+      - bottom=2.5cm
+    include-in-header:
+      - text: |
+          \addtokomafont{disposition}{\rmfamily}
+          \usepackage{fancyhdr, lastpage, framed, caption, xcolor}
+          \captionsetup[figure]{labelformat=empty}
+          \pagestyle{fancyplain}
+          \fancyhf{}
+          \lhead{\fancyplain{}{STAT 0219: Time Series Analysis}}
+          \rhead{\fancyplain{}{Stratton - HW4}}
+          \fancyfoot[RO, LE] {page \thepage\ of \pageref{LastPage}}
+          \thispagestyle{plain}
+editor: source
+---
+<!-- Note: the YAML header is everything above this line. -->
+\vspace{-3in}
+\textbf{Name:} Your name here  
+\textbf{Due:} 2024/10/14
+\vspace{1.5in}
+
+Be sure to submit **both** the .pdf and .qmd file to Canvas by Monday, October 14th at 11:59 pm. 
+
+```{r, include = F}
+set.seed(10052024)
+rm(list = ls())
+library(tidyverse)
+```
+
+0. [1 pt] With whom did you work on this assignment?
+
+   :::{.callout-warning icon=false appearance="simple"}
+   
+   :::
+
+1. [12 pt] The purpose of this question is to demonstrate that there exist time series structures that Holt-Winters cannot estimate very well. To demonstrate this idea, we are going to simulate data from an AR(2) process with $\alpha_1 = 1.1$ and $\alpha_2 = -.3$. 
+
+   a) [1 pt] Write the hypothetical AR(2) model in proper notation.
+   
+      :::{.callout-warning icon=false appearance="simple"}
+
+      :::   
+      
+   b) [1 pt] Express the model from part a in terms of the backshift operator. 
+   
+      :::{.callout-warning icon=false appearance="simple"}
+
+      ::: 
+      
+   c) [1 pt] Determine whether the model is stationary. 
+   
+      :::{.callout-warning icon=false appearance="simple"}
+
+      ::: 
+      
+```{r, indent = "      "}
+
+```
+
+   d) [3 pt] Simulate 12 years of monthly data from an AR(2) process with $\alpha_1 = .8$ and $\alpha_2 = -.1$. Convert the synthetic data to a `ts` object and plot the resulting series. 
+
+```{r, indent = "      ", fig.dim = c(6, 4)}
+
+```
+
+   e) [1 pt] Create an ACF plot of the synthetic series and comment what the plot suggests about the autocorrelation.  
+   
+      :::{.callout-warning icon=false appearance="simple"}
+
+      ::: 
+
+```{r, indent = "      ", fig.dim = c(6, 3.25)}
+
+```
+
+   f) [1 pt] Create an PACF plot of the synthetic series and comment on what the plot suggests about the autocorrelation.  
+   
+      :::{.callout-warning icon=false appearance="simple"}
+
+      ::: 
+
+```{r, indent = "      ", fig.dim = c(6, 3.25)}
+
+```
+
+   g) [2 pt] Fit a Holt-Winters model to the synthetic series and plot the results. 
+  
+```{r, indent = "      ", fig.dim = c(6, 4)}
+
+```
+
+   h) [2 pt] Create an ACF plot of the residuals from the Holt-Winters model and comment on whether the model has accounted for the residual autocorrelation. 
+   
+      :::{.callout-warning icon=false appearance="simple"}
+
+      ::: 
+
+```{r, indent = "      ", fig.dim = c(6, 4)}
+
+```
+
+\newpage
+
+2. [2 pt] Using the characteristic equation, show that a random walk is not stationary. 
+
+   :::{.callout-warning icon=false appearance="simple"}
+
+   :::
+
+3. [3 pt] Determine for what values of $\alpha$ an AR(1) process is stationary. 
+
+   :::{.callout-warning icon=false appearance="simple"}
+
+   :::
+
+4. [6 pt] The purpose of this question is to prove one of the second order properties of an AR(1) process. 
+
+   a) [1 pt] Express an AR(1) process in terms of the backshift operator.  
+
+      :::{.callout-warning icon=false appearance="simple"}
+
+      :::
+      
+   b) [3 pt] Using the expression from part a, show that $x_t = \sum_{i=0}^\infty \alpha^i w_{t-i}$. It is likely helpful to know that $(1-B)^{-1} = 1 + B + B^2 + \dots$ by Binomial expansion.
+
+      :::{.callout-warning icon=false appearance="simple"}
+
+      :::
+      
+   c) [2 pt] Using the expression from part b, show that the $E(x_t) = 0$. Recall that $E\left( \sum_{i=1}^n X_i \right) = \sum_{i=1}^n E(X_i)$ and that $E(cX) = cE(X)$ if $c$ is a constant. 
+
+      :::{.callout-warning icon=false appearance="simple"}
+
+      :::
+
