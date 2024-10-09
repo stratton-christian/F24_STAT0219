@@ -35,6 +35,46 @@ library(lubridate)
 
 \newpage
 
+## Review
+
+Read in the Bozeman air quality data set, create a time series object, and filter the time series to only observations between September 15$^{th}$ and September 20$^{th}$. Plot the resulting time series. 
+
+```{r, message = F, warning = F}
+# load air quality data
+bz_air <- readRDS("mt_pm25_sept2020.rds")
+
+# create a ts
+mt_pm_clean <- bz_air %>%
+  mutate(dt = lubridate::ymd_hms(datetime)) %>%
+  dplyr::select(dt, rawvalue, everything()) %>%
+  arrange(dt)
+
+# create ts
+boz_pm_ts <- ts(
+  mt_pm_clean$rawvalue,
+  start = c(1, 5),
+  end = c(30, 5),
+  freq = 24
+)
+
+boz_ts_short <-  window(boz_pm_ts, start = c(15, 1), end = c(20, 1))
+
+# plot 09/15 - 09/20
+plot(boz_ts_short)
+
+# random walk?
+acf(diff(boz_ts_short))
+
+# another example
+library(quantmod)
+getSymbols('MSFT', src = 'yahoo')
+plot(MSFT$MSFT.Adjusted)
+acf(diff(Ad(MSFT)), na.action = na.omit)
+```
+
+
+\newpage
+
 ## Autoregressive models
 
 :::{.callout-note}
@@ -110,8 +150,8 @@ How can we simulate an AR(1) process?
 
 ```{r, fig.dim = c(7, 4.5)}
 set.seed(10062024)
-x <- w <- rnorm(1000)
-for(t in 2:1000) x[t] <- 0.7 * x[t-1] + w[t]
+x <- w <- rnorm(100)
+for(t in 2:100) x[t] <- 0.7 * x[t-1] + w[t]
 par(mfrow = c(1, 2))
 plot(x, type = "l", xlab = "Time")
 acf(x)
@@ -138,13 +178,36 @@ AIC = 2 \cdot (-\text{log-likelihood} + \text{number of parameters})
 $$
 :::
 
-```{r, fig.dim = c(6, 4)}
+```{r, fig.dim = c(6, 4), message = F, warning = F}
+# a few things
 par(mfrow = c(1,1))
 ar_fit <- ar(x)
 str(ar_fit)
 ar_fit$aic
-predict(ar_fit, n.ahead = 10)
 acf(na.omit(ar_fit$resid))
+
+# obtain predictions 2:N for AR(1) model
+fitted <- ar_fit$x.mean + ar_fit$ar * (x[1:(length(x)-1)] - ar_fit$x.mean)
+plot(x, type = "l")
+lines(fitted ~ c(2:100), col = "red", lty = 2)
+
+# what about forecasts?
+## pretend we observe 1:90, prediction 91:100
+x_short <- x[1:90]
+ar_fit_short <- ar(x_short)
+fitted <- ar_fit_short$x.mean + 
+  ar_fit_short$ar * 
+  (x_short[1:(length(x_short)-1)] - ar_fit_short$x.mean)
+
+plot(x[1:90], xlim = c(0, 100), type ="l")
+abline(v = 90, lty = 2)
+lines(fitted ~ c(2:90), col = "red")
+
+x_pred <- predict(ar_fit_short, n.ahead = 10)
+lines(x_pred$pred, col = "red", lty = 2)
+lines(x_pred$pred - 2*x_pred$se, col = "red", lty = 2)
+lines(x_pred$pred + 2*x_pred$se, col = "red", lty = 2)
+lines(x[91:100] ~ c(91:100), lty = 2)
 ```
 
 \newpage

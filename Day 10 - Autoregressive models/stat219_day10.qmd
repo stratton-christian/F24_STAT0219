@@ -35,6 +35,17 @@ library(lubridate)
 
 \newpage
 
+## Review
+
+Read in the Bozeman air quality data set, create a time series object, and filter the time series to only observations between September 15$^{th}$ and September 20$^{th}$. Plot the resulting time series. 
+
+```{r, message = F, warning = F}
+# load air quality data
+bz_air <- readRDS("mt_pm25_sept2020.rds")
+```
+
+\newpage
+
 ## Autoregressive models
 
 :::{.callout-note}
