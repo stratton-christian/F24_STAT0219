@@ -65,7 +65,7 @@ library(tidyverse)
 
 ```
 
-   d) [3 pt] Simulate 12 years of monthly data from an AR(2) process with $\alpha_1 = .8$ and $\alpha_2 = -.1$. Convert the synthetic data to a `ts` object and plot the resulting series. 
+   d) [3 pt] Simulate 12 years of monthly data from an AR(2) process with $\alpha_1 = 1.1$ and $\alpha_2 = -.3$. Convert the synthetic data to a `ts` object and plot the resulting series. 
 
 ```{r, indent = "      ", fig.dim = c(6, 4)}
 
