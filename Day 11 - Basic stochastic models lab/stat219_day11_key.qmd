@@ -65,7 +65,7 @@ plot(sim_ts)
 2. Create acf and pacf plots of `sim_ts` and comment on what the plots suggest about serial autocorrelation in the series.
 
 ```{r, indent = "   ", warning = F, message = F, fig.dim = c(7, 6)}
-par(mfrow = c(2, 1))
+par(mfrow = c(2,1))
 acf(sim_ts)
 pacf(sim_ts)
 par(mfrow = c(1,1))
