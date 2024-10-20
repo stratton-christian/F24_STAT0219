@@ -1,0 +1,392 @@
+---
+title: "Day 15 - Time Series Regression "
+format:
+  pdf:
+    fontsize: 12pt
+    geometry:
+      - inner=1.5cm
+      - outer=1.5cm
+      - top=2.5cm
+      - bottom=2.5cm
+    include-in-header:
+      - text: |
+          \addtokomafont{disposition}{\rmfamily}
+          \usepackage{fancyhdr, lastpage, framed, caption, xcolor, setspace}
+          \captionsetup[figure]{labelformat=empty}
+          \pagestyle{fancyplain}
+          \fancyhf{}
+          \lhead{\fancyplain{}{STAT 0219: Time Series Analysis}}
+          \rhead{\fancyplain{}{Stratton - Day 15}}
+          \fancyfoot[RO, LE] {page \thepage\ of \pageref{LastPage}}
+          \thispagestyle{plain}
+editor: source
+---
+\vspace{-1in}
+
+```{r, include = F}
+library(tidyverse)
+```
+
+## Introduction
+
+Today we learn how to formally fit a time series regression model by combining a regression model with a serially correlated error process. 
+
+***
+
+\newpage
+
+## Review
+
+The code below creates a time series regression model
+
+```{r}
+# data
+data("AirPassengers")
+ap <- AirPassengers
+ap_tbl <- tibble(
+  ap = c(ap), year = rep(1949:1960, each = 12),
+  month = rep(1:12, 12) %>% factor()
+) %>% mutate(t = 1:n(), t2 = t^2)  %>%
+  mutate(t_scaled = c(scale(t)), t2_scaled = c(scale(t2))) %>%
+  mutate(log_ap = log(ap))
+ap_sub_tbl <- ap_sub %>% filter(year < 1960)
+
+# fit model
+ols_fit <- lm(log_ap ~ t + t2 + month, ap_sub_tbl)
+```
+
+\newpage
+
+## Regression overview
+
+:::{.callout-note title="Linear model theory"}
+A ______________________ is a model of the form
+$$
+y_i = \beta_0 + \beta_1x_{i,1} + \beta_2x_{i,2} + \dots + \beta_px_{i,p} + \epsilon_i
+$$
+where $\epsilon_i$ is ________________________________ distributed $N(0, \sigma^2)$. In matrix notation, the above model is equivalent to 
+$$
+\boldsymbol{y} = \boldsymbol{X}\boldsymbol{\beta} + \boldsymbol{\epsilon}
+$$
+where
+$$
+\boldsymbol{y} = \begin{bmatrix}
+y_1 \\
+y_2 \\
+\vdots \\
+y_n
+\end{bmatrix}, \hspace{5mm}
+\boldsymbol{X} = \begin{bmatrix}
+1 & x_{11} & x_{12} & \dots & x_{1p} \\
+1 & x_{21} & x_{22} & \dots & x_{2p}\\
+\vdots & \vdots & \vdots & \ddots & \vdots\\
+1 & x_{n1}& x_{n2} & \dots & x_{np}
+\end{bmatrix}, \hspace{5mm}
+\boldsymbol{\beta} = \begin{bmatrix}
+\beta_1 \\
+\beta_2 \\
+\vdots \\
+\beta_p
+\end{bmatrix}, \hspace{5mm}
+\boldsymbol{\epsilon} = \begin{bmatrix}
+\epsilon_1 \\
+\epsilon_2 \\
+\vdots \\
+\epsilon_n
+\end{bmatrix}
+$$
+By properties of normal distributions, the above model is equivalent to
+$$
+\boldsymbol{y} \sim \mathcal{N} (\boldsymbol{X}\boldsymbol{\beta}, \boldsymbol{\Sigma})
+$$
+where $\boldsymbol{\Sigma} = \sigma^2 \boldsymbol{\mathcal{I}}_n$ and $\boldsymbol{\mathcal{I}}_n$ is an $n \times n$ identity matrix. To fit the model, we must estimate ___________ and _____________. The estimated regression equation is written as:
+$$
+\hat{y}_i = \hat{\beta}_0 + \hat{\beta}_1x_{i,1} + \hat{\beta}_2x_{i,2} + \dots + \hat{\beta}_px_{i,p}
+$$
+Parameter estimates are obtained by minimizing the ________________________. The error in regression is called a _______________, 
+$$
+e_i = y_i - \hat{y}_i
+$$
+The _____________________________, which minimizes the __________, is 
+$$
+\hat{\boldsymbol{\beta}} = (\boldsymbol{X}^\top\boldsymbol{X})^{-1}\boldsymbol{X}^\top\boldsymbol{y}
+$$
+:::
+
+\newpage
+
+**Assumptions**
+
+1. 
+
+\vfill 
+
+2.
+
+\vfill
+
+3. 
+
+\vfill
+
+4. 
+
+\vfill
+
+\newpage
+
+\doublespacing
+:::{.callout-note title="Linear models in R"}
+The following functions are useful when working with regression models in R:
+
+- `lm`
+
+- `plot`
+
+- `fitted`
+
+- `resid`
+
+- `predict`
+
+- `model.matrix`
+
+:::
+\singlespacing
+
+
+\newpage
+
+## Air Passengers activity
+
+1. Load the `AirPassengers` data set and create a data frame that includes the count of air passengers, the year, the month, and a time index ($t = 1, 2, \dots, n$). Plot the count of air passengers by the time index. Then create a second data set, called `ap_sub`, that contains the air passenger measurements between 1949 and 1959. 
+
+   :::{.callout-important}
+   Be sure to treat the month column as a `factor`!
+   :::
+
+```{r, indent = "   ", fig.dim = c(7, 4)}
+data("AirPassengers")
+ap <- AirPassengers
+
+ap_tbl <- tibble(
+  val = c(ap), year = rep(1:12, each = 12),
+  month = rep(1:12, 12) %>% factor()
+) %>% mutate(t = 1:n()) 
+
+ap_sub <- ap_tbl %>% filter(year < 12)
+
+ap_tbl %>%
+  ggplot() + 
+  geom_line(aes(x = t, y = val)) +
+  theme_bw() +
+  labs(x = "Time", y = "Air Passengers (1000s)")
+```
+
+2. Fit a regression model, called `fit`, that models the passenger count by the time index plus the month (be sure month is treated as a `factor`) for the `ap_sub` data frame. Print out a summary of the model, and use the summary to write out the estimated regression model. 
+
+```{r, indent = "   ", fig.dim = c(7, 4)}
+fit <- lm(val ~ t + month, ap_sub)
+summary(fit)
+```
+
+   :::{.callout-warning icon=false appearance="simple"}
+   $$
+   \begin{split}
+   \hat{ap} = 69.16 &+ 2.57 \text{time} - 7.57 \text{feb} + 25.68 \text{mar} + 15.93 \text{apr} + 17.55 \text{may} + 52.70 \text{jun} + 85.50 \text{jul} \\
+   &+ 84.11 \text{aug} + 37.36 \text{sept} - .02 \text{oct} - 32.95 \text{nov} - 7.7 \text{dec}
+   \end{split}
+   $$
+   :::
+   
+3. Recreate the slope coefficient estimates by calculating the OLS estimator by hand using `model.matrix`. The following R functions may be useful:
+
+   - `solve` computes a matrix inverse
+   - `t` computes the transpose of a matrix
+   - `%*%` computes matrix multiplication
+
+```{r, indent = "   ", fig.dim = c(7, 4)}
+X <- model.matrix(fit)
+solve(t(X) %*% X) %*% t(X) %*% ap_sub$val
+```
+
+4. Interpret the slope coefficient associated with the time index. 
+
+   :::{.callout-warning icon=false appearance="simple"}
+   For a one unit increase in the time index (which is a one month increase in time) and holding the month constant, we expect a 2.57 unit increase in the number of passengers (in thousands), on average.
+   :::
+   
+5. Interpret the slope coefficient associated with the adjustment to the intercept for August.
+
+   :::{.callout-warning icon=false appearance="simple"}
+   Holding the time constant, the number of air passengers (in thousands) in August is 84.11 units greater than in January, on average.
+   :::
+
+6. Assess the linearity assumption for the regression model by running `plot(fit, which = 1)`
+
+```{r, indent = "   ", fig.dim = c(7, 4)}
+plot(fit, which = 1)
+```
+
+   :::{.callout-warning icon=false appearance="simple"}
+   Definitely some curvature leftover in the residuals!
+   :::
+   
+7. Assess the constant variance assumption for the regression model by using the previous plot and running `plot(fit, which = 3)`
+
+```{r, indent = "   ", fig.dim = c(7, 4)}
+plot(fit, which = 3)
+```
+
+   :::{.callout-warning icon=false appearance="simple"}
+   There is clear evidence of fanning in the residuals vs fitted values plot, which is also indicated by the curvature in the scale-location plot. Both plots suggest that the variance of the residuals is not constant, and appears to increase as the fitted values increase. 
+   :::
+   
+8. Assess the normality assumption for the regression model by running `plot(fit, which = 2)`
+
+```{r, indent = "   ", fig.dim = c(7, 4)}
+plot(fit, which = 2)
+```
+
+   :::{.callout-warning icon=false appearance="simple"}
+   The points fall of the hypothesized quantile lines in the tails, suggesting a violation of normality. 
+   :::
+   
+9. Assess the independence assumption by thinking about the problem and running `acf(resid(fit))` and `pacf(resid(fit))`
+
+```{r, indent = "   ", fig.dim = c(7, 4)}
+acf(resid(fit))
+pacf(resid(fit))
+```
+
+   :::{.callout-warning icon=false appearance="simple"}
+   Generally, we would not expect observations to be independent of one another, since we would expect observations collected sequentially in time to be similar. The ACF plot confirms this suspicion, and indicated that there is autocorrelation left in the residuals at multiple lags (1, 2, 11, 12, 13, ...). The PACF plot suggests that the bulk of this residual autocorrelation is driven by lags 1 and 2. 
+   :::
+
+10. One way to address the violations of the normality and constant variance assumptions is to log transform the response. To address the violation of the linearity assumption, it may be helpful to create a squared time index variable. Create new columns in the `ap_sub` data frame that log the number of passengers and computes the square of the time index. Then fit a new model, called `fit_log`, that models the logged passenger count by the time index, time index squared, and month. 
+
+```{r, indent = "    ", fig.dim = c(7, 4)}
+ap_sub <- ap_sub %>%
+  mutate(
+    log_ap = log(val),
+    t2 = t^2
+  )
+fit_log <- lm(log_ap ~ t + t2 + month, ap_sub)
+summary(fit_log)
+```
+
+11. Reassess the assumptions using the new model. 
+
+```{r, indent = "    ", fig.dim = c(7, 6)}
+par(mfrow = c(3,2))
+plot(fit_log)
+acf(resid(fit_log))
+pacf(resid(fit_log))
+```
+
+    :::{.callout-warning icon=false appearance="simple"}
+    - The independence assumption remains mostly unchanged. We still expect serial correlation since observations are collected over time, and the ACF and PACF plots still suggest that there is serial autocorrelation present in the residuals. Based on the PACF plot, it appears to be largely driven by an AR(1) process. 
+    - The residuals vs fitted values plot looks quite a bit better, showing very slight curvature and no evidence of fanning, suggesting that the changes we made to the model resulted in greater congruence with the linearity and constant variance assumptions. 
+    - The points in the QQ plot still show a slight violation of the normality assumption, but we should keep in mind that we have over 100 observations in this data set. Making normal inference is likely still reasonable here, since the Central Limit Theorem tells us that the sampling distribution of our sample means (the coefficients) are likely approximately normally distributed with over 100 observations. 
+    :::
+
+12. If the residuals are positively serially correlated, we will tend to underestimate the standard errors of the regression coefficients. What impact does this have when determining statistical significance of regression coefficients? It may be helpful to know that the t-test provided in the R output is calculated as
+$$
+t = \frac{\hat{\beta}}{SE(\hat{\beta})}
+$$
+
+    :::{.callout-warning icon=false appearance="simple"}
+    If we under estimate the standard errors, we overestimate the $t$ statistic, leading to erroneously small p-values. Therefore, we are more likely to conclude that regression coefficients are "statistically significant" in the presence of positive serial autocorrelation, even if they shouldn't be.  
+    :::
+
+13. With the exception of the independence assumption, hopefully you are convinced that the model created in 10 is a reasonable model for the `AirPassengers` data set. Next, calculate the fitted values by hand and compare them to the values from `fitted`. 
+
+```{r, indent = "    ", fig.dim = c(7, 6)}
+# use matrix algebra to spend it up
+X <- model.matrix(fit_log)
+fitted_byhand <- c(X %*% matrix(coef(fit_log), ncol = 1))
+all((fitted_byhand - fitted(fit_log)) < 1e6)
+```
+
+14. Plot the observed and fitted time series on a single plot and comment on how well the model estimates the observed relationship. 
+
+```{r, indent = "    ", fig.dim = c(7, 4)}
+ap_sub %>%
+  mutate(fitted = fitted(fit_log)) %>%
+  pivot_longer(
+    c("log_ap", "fitted"),
+    names_to = "source",
+    values_to = "value"
+  ) %>%
+  mutate(
+    year_true = 1948 + year,
+    dt = mdy(paste0(month, "-1-", year_true))
+  ) %>%
+  ggplot() + 
+  geom_line(aes(x = dt, y = value, col = source)) +
+  theme_bw()
+```
+
+    :::{.callout-warning icon=false appearance="simple"}
+    Looks pretty good to me! The fitted matches the observed logged passengers quite well. 
+    :::
+
+15. Calculate the residuals by hand and compare them to the values obtained from `resid`. 
+```{r, indent = "    ", fig.dim = c(7, 6)}
+resid_byhand <- ap_sub$log_ap - fitted_byhand
+all((resid_byhand - resid(fit_log)) < 1e6)
+```
+
+16. Use the `fit_log` model to forecast the time series for the year of 1960 (which we had previously excluded) using the `predict` function. The predict function requires a `newdata` argument to obtain forecasts - this data frame must include all the predictors used in the model. Plot the observed, fitted, and forecasted series on a single plot and include a 95% prediction interval for the forecasted series. For more about predicting from `lm` models, run `?predict.lm`. 
+
+```{r, indent = "    ", fig.dim = c(7, 4), warning = F}
+# new data
+ap_pred_tbl <- ap_tbl %>%
+  filter(year == 12) %>%
+  mutate(
+    log_ap = log(val),
+    t2 = t^2
+  )
+
+# obtain predictions
+ap_pred <- predict(
+  fit_log, newdata = ap_pred_tbl, interval = "prediction"
+) %>%
+  as_tibble %>%
+  mutate(
+    source = "fitted",
+    year = 1960,
+    month = 1:12
+  ) %>%
+  mutate(dt = ymd(paste0(year, "-", month, "-1")))
+
+# plot nicely
+ap_tbl %>%
+  mutate(log_ap = log(val)) %>%
+  mutate(fitted = c(fitted(fit_log), rep(NA, 12))) %>%
+  pivot_longer(
+    c("log_ap", "fitted"),
+    names_to = "source",
+    values_to = "value"
+  ) %>%
+  mutate(
+    year_true = 1948 + year,
+    dt = mdy(paste0(month, "-1-", year_true))
+  ) %>%
+  ggplot() + 
+  geom_line(aes(x = dt, y = value, col = source)) +
+  geom_vline(aes(xintercept = ymd("1960-1-1")), linetype = "dotdash") + 
+  geom_ribbon(
+    data = ap_pred,
+    aes(x = dt, ymin = lwr, ymax = upr), alpha = .20
+  ) + 
+  geom_line(
+    data = ap_pred,
+    aes(x = dt, y = fit, col = source), linetype = "dotted"
+  ) + 
+  theme_bw() +
+  labs(
+    x = "Date",
+    y = "log(Air Passengers (1000s))"
+  )
+```
