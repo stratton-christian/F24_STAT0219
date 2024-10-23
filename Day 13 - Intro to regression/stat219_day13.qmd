@@ -281,7 +281,7 @@ $$
 
 18. One way to remedy the problem described in the previous question is to create an *interaction* between $t$ and the month, which allows the estimated effect of month to depend on $t$. The code below fits such an interaction model. Recreate the figure from question 16 and comment on the differences.
 
-```{r, indent = "    ", fig.dim = c(7, 4), warning = F}
+```{r, indent = "    ", fig.dim = c(7, 4), warning = F, eval = F}
 # create a new fit_log that includes the interaction
 fit_log <- lm(log_ap ~ t*month + t2, ap_sub)
 ```
