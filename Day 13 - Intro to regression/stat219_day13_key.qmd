@@ -427,7 +427,7 @@ ap_tbl %>%
   ) + 
   geom_line(
     data = ap_pred,
-    aes(x = dt, y = fit, col = source), linetype = "dotted"
+    aes(x = dt, y = fit, col = source)
   ) + 
   theme_bw() +
   labs(
