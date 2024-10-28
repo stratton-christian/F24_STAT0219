@@ -37,9 +37,9 @@ Today we learn how to formally fit a time series regression model by combining a
 
 ## Review
 
-The code below creates a time series regression model
+The code below fits a time series regression model to the `AirPassengers` series before the year 1960 that models the log count of air passengers by the interaction of month and time index and time index squared.
 
-```{r}
+```{r, fig.dim = c(7,3.5)}
 # data
 data("AirPassengers")
 ap <- AirPassengers
@@ -52,7 +52,11 @@ ap_tbl <- tibble(
 ap_sub_tbl <- ap_tbl %>% filter(year < 1960)
 
 # fit model
-ols_fit <- lm(log_ap ~ t + t2 + month, ap_sub_tbl)
+ols_fit <- lm(log_ap ~ t_scaled*month + t2_scaled , ap_sub_tbl)
+confint(ols_fit)
+summary(ols_fit)
+acf(resid(ols_fit))
+pacf(resid(ols_fit))
 ```
 
 \newpage
@@ -60,11 +64,11 @@ ols_fit <- lm(log_ap ~ t + t2 + month, ap_sub_tbl)
 ## Generalized least squares overview
 
 :::{.callout-note title="GLS theory"}
-A ______________________ is a model of the form
+Suppose we extend the typical _________________ model to accomodate violations of independence and constant variance. That is, let
 $$
 y_i = \beta_0 + \beta_1x_{i,1} + \beta_2x_{i,2} + \dots + \beta_px_{i,p} + \epsilon_i
 $$
-where $\epsilon_i$ is ________________________________ distributed $N(0, \sigma^2)$. In matrix notation, the above model is equivalent to 
+where $\epsilon_i$ is distributed $N(0, \sigma_i^2)$ and may not be indendent. In matrix notation, the above model is equivalent to 
 $$
 \boldsymbol{y} = \boldsymbol{X}\boldsymbol{\beta} + \boldsymbol{\epsilon}
 $$
@@ -97,32 +101,195 @@ y_n
 $$
 By properties of normal distributions, the above model is equivalent to
 $$
-\boldsymbol{y} \sim \mathcal{N} (\boldsymbol{X}\boldsymbol{\beta}, \boldsymbol{\Sigma})
+\boldsymbol{y} \sim \mathcal{N} (\boldsymbol{X}\boldsymbol{\beta},\boldsymbol{\Sigma})
 $$
-where $\boldsymbol{\Sigma} = \sigma^2 \boldsymbol{\mathcal{I}}_n$ and $\boldsymbol{\mathcal{I}}_n$ is an $n \times n$ identity matrix. To fit the model, we must estimate ___________ and _____________. The estimated regression equation is written as:
+where 
+
 $$
-\hat{y}_i = \hat{\beta}_0 + \hat{\beta}_1x_{i,1} + \hat{\beta}_2x_{i,2} + \dots + \hat{\beta}_px_{i,p}
+\boldsymbol{\Sigma} = \begin{bmatrix}
+\sigma_{11} & \sigma_{12} & \dots & \sigma_{1n} \\
+\sigma_{21} & \sigma_{22} & \dots & \sigma_{2n} \\
+\vdots & \vdots & \ddots & \vdots \\
+\sigma_{n1} & \sigma_{n2} & \dots & \sigma_{nn}
+\end{bmatrix}
 $$
-Parameter estimates are obtained by minimizing the ________________________. The error in regression is called a _______________, 
+and $\boldsymbol{\Sigma} = \boldsymbol{\Sigma}^{\top}$. In its general form, we cannot _________________ because there are more parameters than observations (estimating $\boldsymbol{\Sigma}$ requires estimating $n + \frac{n(n-1)}{2}$ parameters). Therefore, to estimate $\boldsymbol{\Sigma}$, we must assume that some structure exists. An example of such structure is an ___________ process, where:
 $$
-e_i = y_i - \hat{y}_i
+\boldsymbol{\Sigma} = \sigma^2 \begin{bmatrix}
+1 & \rho & \rho^2 & \rho^3 & \dots & \rho^{n-1} \\
+\rho & 1 & \rho & \rho^2 & \dots & \rho^{n-2} \\
+\rho & \rho^2 & 1 & \rho & \dots & \rho^{n-3} \\
+\vdots & \vdots & \vdots & \vdots & \ddots & \vdots \\
+\rho & \rho^2 & \rho^3 & \rho^4 & \dots & 1 
+\end{bmatrix}
 $$
-The _____________________________, which minimizes the __________, is 
+
+The ____________________________ estimate of $\boldsymbol{\beta}$ is
 $$
-\hat{\boldsymbol{\beta}} = (\boldsymbol{X}^\top\boldsymbol{X})^{-1}\boldsymbol{X}^\top\boldsymbol{y}
+\hat{\beta}_{gls} = \left(\boldsymbol{X}^\top \boldsymbol{\Omega}^{-1} \boldsymbol{X} \right)^{-1} \boldsymbol{X}^\top \boldsymbol{\Omega}^{-1} \boldsymbol{y}
 $$
+
+Estimating the other model parameters (ex. $\sigma^2$ and $\rho$) can be quite difficult and typically uses a process called restricted maximum likelihood.
 :::
 
-## Problems
+\newpage
 
-- Estimating GLS models is *very* hard
-- No closed for expression for the standard error of the prediction
-- Solutions:
-   - Delta method
-   - Bootstrapping
-   - Use Bayes
+## GLS in R
+
+:::{.callout-note}
+To implement GLS in R, we use the `gls` function in the `nlme` package. 
+:::
+
+```{r, echo = T, message = F, warning = F, fig.dim = c(7, 4)}
+library(nlme)
+gls_fit <- gls(
+  log_ap ~ t_scaled*month + t2_scaled, correlation = corARMA(p = 1, q = 0), ap_sub_tbl
+)
+summary(gls_fit)
+confint(gls_fit)
+
+# normalized residuals account for the estimate serial correlation
+acf(resid(gls_fit, type = "normalized"))
+pacf(resid(gls_fit, type = "normalized"))
+```
+
+\newpage
+
+## Forecasts with GLS
+
+:::{.callout-note}
+To obtain forecasts, we use the `predict` function. 
+:::
+
+```{r, echo = T, message = F, warning = F, fig.dim = c(7, 4)}
+# create table for prediction
+pred_tbl <- ap_tbl %>%
+  filter(year >= 1960) 
+
+# obtain prediction
+## note: you cannot obtain SEs!!!
+(pred <- predict(gls_fit, pred_tbl))
+
+# plot them
+ap_tbl %>%
+  mutate(
+    fitted = c(fitted(gls_fit), rep(NA, 12)),
+    forecast = c(rep(NA, 132), pred)
+  ) %>%
+  pivot_longer(log_ap:forecast, names_to = "type", values_to = "val") %>%
+  mutate(dt = ymd(paste0(year, "-", month, "-1"))) %>%
+  ggplot() + 
+  geom_line(aes(x = dt, y = val, col = type)) +
+  theme_bw()
+```
+
+
+:::{.callout-important}
+Unfortunately, there is no closed form solution for the _______________________ in a GLS model. Therefore, to obtain estimates of uncertainty in our forecasts from a GLS model, you must:
+
+- Figure out how to bootstrap the SE of the prediction (disgusting)
+- Use the Delta method (somehow more disgusting)
+- Fit a Bayesian model 
+:::
+
+:::{.callout-note title="Why use GLS?"}
+GLS is most useful for making inference about regression coefficients with complicated correlation structures (GLS can accommodate hierarchical models, time series models, longitudinal models, and any combination of the three). GLS allows us to adjust the SEs of the coefficient estimates and obtain confidence intervals and p-values that account for the serial correlation that is present.  
+:::
 
 
 \newpage
 
 ## State-space model using `arima`
+
+:::{.callout-note title="State-space models"}
+The `arima` function offers a way to fit time series regression models and obtain estimates of the _________________________ using a ____________ representation of the model. The details are beyond the scope of this class, but representing the model in this way allows the model to be estimated using a Kalman-filter, which enables estimates of the ___________________. 
+:::
+
+```{r, message = F, warning = F, fig.dim = c(7, 3)}
+# prepare a few things
+ts <- ts(
+  ap_sub_tbl$log_ap,
+  start = c(1949, 1),
+  freq = 12
+)
+
+ss_fit <- arima(
+  x = ts,
+  order = c(1, 0, 0),
+  xreg = model.matrix(
+    ~ t_scaled*month + t2_scaled,
+    ap_sub_tbl
+  ),
+  include.mean = F
+)
+ss_fit
+
+acf(ss_fit$residuals)
+pacf(ss_fit$residuals)
+```
+
+\newpage
+
+## Forecasts with state-space models
+
+:::{.callout-note title="Forecasts with state-space models"}
+To obtain forecasts, we again use the `predict` function, specifying the number of time points ahead (`n.ahead`) and the matrix of new regression coefficients (`newxreg`).
+:::
+
+```{r, message = F, warning = F, fig.dim = c(7, 5)}
+# forecasts
+ss_fitted <- predict(
+  ss_fit, 
+  newxreg = model.matrix(
+    ~ t_scaled*month + t2_scaled,
+    ap_sub_tbl
+  )
+)
+
+(ss_pred <- predict(
+  ss_fit, n.ahead = 12, 
+  newxreg = model.matrix(
+    ~ t_scaled*month + t2_scaled,
+    ap_tbl %>% filter(year >= 1960)
+  )
+))
+
+# plot
+ap_tbl %>%
+  mutate(
+    fitted = c(ss_fitted$pred, rep(NA, 12)),
+    forecast = c(rep(NA, 132), ss_pred$pred)
+  ) %>%
+  pivot_longer(log_ap:forecast, names_to = "type", values_to = "val") %>%
+  mutate(dt = ymd(paste0(year, "-", month, "-1"))) %>%
+  ggplot() + 
+  geom_line(aes(x = dt, y = val, col = type)) +
+  geom_ribbon(
+    data = tibble(
+      dt = ymd(paste0(rep(1960, 12), "-", 1:12, "-1")),
+      lwr = c(ss_pred$pred - 2*ss_pred$se),
+      upr = c(ss_pred$pred + 2*ss_pred$se),
+      type = "forecast"
+    ),
+    aes(x = dt, ymin = lwr, ymax = upr),
+    alpha = .30
+  ) +
+  theme_bw()
+```
+
+\newpage
+
+## Some comparisons
+
+```{r}
+tibble(
+  coef = names(coef(ols_fit)),
+  ols = coef(ols_fit),
+  ols_se = summary(ols_fit)$coefficients[,2],
+  gls = coef(gls_fit),
+  gls_se = sqrt(diag(summary(gls_fit)$varBeta)),
+  ss = ss_fit$coef[-1],
+  ss_se = sqrt(diag(ss_fit$var.coef))[-1]
+) %>%
+  print(n = "all")
+```

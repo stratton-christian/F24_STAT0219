@@ -1,0 +1,382 @@
+---
+title: "Day 16 - Lab: Regression harmonics"
+format:
+  pdf:
+    fontsize: 12pt
+    geometry:
+      - inner=1.5cm
+      - outer=1.5cm
+      - top=2.5cm
+      - bottom=2.5cm
+    include-in-header:
+      - text: |
+          \addtokomafont{disposition}{\rmfamily}
+          \usepackage{fancyhdr, lastpage, framed, caption, xcolor, setspace}
+          \captionsetup[figure]{labelformat=empty}
+          \pagestyle{fancyplain}
+          \fancyhf{}
+          \lhead{\fancyplain{}{STAT 0219: Time Series Analysis}}
+          \rhead{\fancyplain{}{Stratton - Day 16}}
+          \fancyfoot[RO, LE] {page \thepage\ of \pageref{LastPage}}
+          \thispagestyle{plain}
+editor: source
+---
+\vspace{-3in}
+\textbf{Name:} Your name here  
+\textbf{Due:} 2024/11/06  
+\vspace{1.5in}
+
+
+```{r, include = F}
+rm(list = ls())
+library(tidyverse)
+library(nlme)
+```
+
+## Introduction
+
+In this assignment, you will simulate a time series using some of the regression techniques discussed in class. Then, you will fit an OLS, GLS, and state-space representation of the time series and compare and contrast the results. For this assignment, assume that we are simulating daily measurements over a 25 week period. 
+
+***
+
+\newpage
+
+:::{.callout-note title="Regression harmonics"}
+Sometimes, it can be difficult to put your finger on exactly what the is causing a seasonal effect. In such case, it is sometimes useful to model the seasonal component as a sum of harmonic functions, like `sin` and `cos`. The **harmonic seasonal model** for time series $\{x_t\}$ with frequency $f$ is defined by:
+$$
+x_t = m_t + \sum_{i = 1}^{[f/2]} \left(s_i \sin(2\pi i t/f) + c_i \cos(2\pi i t/f) \right) + z_t
+$$
+where $[f/2]$ denotes the integer component of $f/2$ (sometimes called the floor function). 
+:::
+
+For example, a harmonic seasonal model for daily observations over the course of weeks might look like:
+$$
+x_t = \beta_0 + \beta_1 t + \beta_2 \sin\left(\frac{2\pi t}{7}\right) + \beta_3 \sin\left(\frac{4\pi t}{7}\right) + \beta_4 \sin\left(\frac{6\pi t}{7}\right) + \beta_5 \cos\left(\frac{2\pi t}{7}\right) + \beta_6 \cos\left(\frac{4\pi t}{7}\right) + \beta_7 \cos\left(\frac{6\pi t}{7}\right) + z_t
+$$
+where $z_t$ is the error series. By writing the model in this way, we can use regression to estimate all model parameters. In the following lab, we will simulate a time series using this method, then compare and contrast parameter estimates from OLS, GLS, and state-space models. 
+
+\newpage
+
+```{r, include = F}
+set.seed(10272024)
+rm(list = ls())
+library(tidyverse)
+```
+
+**Simulating a time series**
+
+1. [3 pt] Let us start by generating the mean function for our series. Simulate the mean function for daily measurements from a 25-week long series with a linear trend and a harmonic seasonal component. You may choose the values used to generate the mean function, but the resulting function should have clear linear trend and seasonality. Note that your seasonal effects should have 3 harmonic cycles. Plot the mean function. 
+
+```{r, indent = "   ", fig.dim = c(7, 4)}
+mean_func <- function(seed = NULL, n, freq, beta = rnorm(8)){
+  # function to simulate mean of ts using random coefficients
+  if(!is.null(seed)) set.seed(seed)
+  tmp <- tibble(
+    t = 1:n
+  ) %>%
+    mutate(
+      sint = sin(2*pi*t/freq),
+      cost = cos(2*pi*t/freq),
+      sin2t = sin(2*pi*2*t/freq),
+      cos2t = cos(2*pi*2*t/freq),
+      sin3t = sin(2*pi*3*t/freq),
+      cos3t = cos(2*pi*3*t/freq)
+    )
+  
+  X <- model.matrix(~ t + sint + cost + sin2t + cos2t + sin3t + cos3t, tmp)
+  tmp$mean <- c(X %*% beta)
+  out <- list(
+    df = tmp,
+    mean = tmp$mean,
+    beta = beta
+  )
+  return(out)
+}
+
+mean <- mean_func(
+  seed = 10292024, n = 7*25, freq = 7, 
+  beta = c(1, .05, 1, -2, runif(4, -1, 1))
+)
+mean$df %>%
+  ggplot() + 
+  geom_line(aes(x = t, y = mean))+
+  theme_bw()
+```
+
+2. [2 pt] Simulate a (stationary) AR(2) process to add to the mean function created in question 1. You may choose the values of the parameters $\alpha_1$, $\alpha_2$, and $\sigma$, but ensure that the simulated error series is stationary, zero-mean, and exhibits meaningful serial autocorrelation (i.e. do not set the $\alpha$'s to be super small). Plot the error series. 
+
+```{r, indent = "   ", fig.dim = c(7, 4)}
+set.seed(10292024)
+error <- w <- rnorm(7*25)
+for(t in 3:(7*25)) error[t] <- .7*error[t-1] - .3*error[t-2] + w[t]
+mean$df$error <- error
+
+mean$df %>%
+  ggplot() + 
+  geom_line(aes(x = t, y = error))+
+  theme_bw()
+```
+
+3. [2 pt] Combine the mean function with the error series to create a complete time series and plot the result. 
+
+```{r, indent = "   ", fig.dim = c(7, 4)}
+ts_df <- mean$df %>%
+  mutate(y = mean + error)
+
+ts_df %>%
+  ggplot() + 
+  geom_line(aes(x = t, y = y)) +
+  theme_bw()
+```
+
+4. [1 pt] Finally, create two data sets: `obs_df` and `forecast_df`, comprised of the first 140 and last 35 time points, respectively. Henceforth, the `obs_df` data set will represent the data that we observe, and the `forecast_df` data set will represent unobserved values that we hope to forecast. 
+
+```{r, indent = "   ", fig.dim = c(7, 4)}
+obs_df <- ts_df %>% filter(t <= 140)
+forecast_df <- ts_df %>% filter(t >140)
+```
+
+\newpage
+
+**OLS**
+
+5. [2 pt] Fit an ordinary least squares regression model to the `obs_df` time series, including `t` and all 6 harmonic terms, and create an PACF plot of the residuals. Comment on what you see. 
+
+```{r, indent = "   ", fig.dim = c(7, 4)}
+ols_fit <- lm(y ~ t + sint + sin2t + sin3t + cost + cos2t + cos3t, obs_df)
+pacf(resid(ols_fit))
+```
+
+   :::{.callout-warning icon=false appearance="simple"}
+   There is evidence of an AR(2) process in the residual error series - which makes sense, because that is what we simulated!
+   :::
+
+:::{.callout-note title="Confidence vs prediction intervals"}
+When forecasting future values, we make the distinction between estimating the *mean response* and predicting a future *individual* response; the former is called a confidence interval and the latter is called a prediction interval. The estimated value remains the same between the two intervals, but the standard error of the value changes (which affects the width of the confidence interval).
+
+As an example, consider the `AirPassengers` data. When forecasting one time point ahead, a confidence interval would provide a range of plausible values for the average number of air passengers on all planes one time point ahead, while a prediction interval would provide a range of plausible values for the number of air passengers on a single plane. There is much more uncertainty in the latter than the former. 
+
+The formulas to calculate confidence intervals and predictions intervals for regression models are quite complicated. Fortunately, the `predict` function in R will do it for you by specifying the `interval` type in the call to predict.
+:::
+
+6. [2 pt] Forecast the values of the series in the `forecast_df` data frame, and plot the observed series, fitted series, and forecasted series on a single plot, including 95% **confidence** intervals for the forecast. (see `?predict.lm` for examples)
+
+```{r, fig.dim = c(7, 4)}
+pred <- predict(ols_fit, newdata = forecast_df, interval = "confidence")
+
+# plot
+ts_df %>%
+  mutate(
+    fitted = c(fitted(ols_fit), rep(NA, nrow(forecast_df))),
+    forecast = c(rep(NA, nrow(obs_df)), pred[,1])
+  ) %>%
+  dplyr::select(t, y, fitted, forecast) %>%
+  pivot_longer(y:forecast, names_to = "type", values_to = "val") %>%
+  ggplot() +
+  geom_line(aes(x = t, y = val, col = type)) +
+  geom_ribbon(
+    data = tibble(
+      t = forecast_df$t,
+      lwr = pred[,2],
+      upr = pred[,3]
+    ),
+    aes(x = t, ymin = lwr, ymax = upr), alpha = .25
+  ) +
+  theme_bw()
+```
+
+7. [2 pt] Do the same thing again, but instead including a **prediction** interval. Comment on which intervals are wider: the confidence or the prediction. 
+
+```{r, fig.dim = c(7, 4)}
+pred <- predict(ols_fit, newdata = forecast_df, interval = "prediction")
+
+# plot
+ts_df %>%
+  mutate(
+    fitted = c(fitted(ols_fit), rep(NA, nrow(forecast_df))),
+    forecast = c(rep(NA, nrow(obs_df)), pred[,1])
+  ) %>%
+  dplyr::select(t, y, fitted, forecast) %>%
+  pivot_longer(y:forecast, names_to = "type", values_to = "val") %>%
+  ggplot() +
+  geom_line(aes(x = t, y = val, col = type)) +
+  geom_ribbon(
+    data = tibble(
+      t = forecast_df$t,
+      lwr = pred[,2],
+      upr = pred[,3]
+    ),
+    aes(x = t, ymin = lwr, ymax = upr), alpha = .25
+  ) +
+  theme_bw()
+```
+
+   :::{.callout-warning icon=false appearance="simple"}
+   The prediction intervals are much wider!
+   :::
+
+\newpage
+
+**GLS** 
+
+8. [2 pt] Fit a GLS model with an AR(2) correlation structure to the `obs_df` time series and create a pacf plot of the normalized residuals. What are the estimated values of $\alpha_1$ and $\alpha_2$? Does the GLS model solve the issues with autocorrelation in the residuals?
+
+```{r, indent = "   ", fig.dim = c(7, 4)}
+gls_fit <- gls(
+  y ~ t + sint + sin2t + sin3t + cost + cos2t + cos3t, 
+  correlation = corARMA(p = 2),
+  obs_df
+)
+summary(gls_fit)
+pacf(resid(gls_fit, "normalized"))
+
+```
+
+   :::{.callout-warning icon=false appearance="simple"}
+   $\hat{\alpha}_1 = .75$ and $\hat{\alpha}_2 = -.41$, which are very similar to the values used to generate the series. Based on the PACF plot, there does not appear to be  autocorrelation left in the residual error series!
+   :::
+
+\vfill
+
+No more questions on GLS in the lab - tune in for more in the homework. :)
+
+\newpage
+
+**State-space**
+
+9. [2 pt] Fit a state-space model with an AR(2) correlation structure to `obs_df` time series and create a pacf plot of the residuals. What are the estimated values of $\alpha_1$ and $\alpha_2$? Does the SS model solve the issues with autocorrelation in the residuals?
+
+```{r, indent = "   ", fig.dim = c(7, 4)}
+# a few things
+sim_ts <- ts(
+  obs_df$y,
+  freq = 7
+)
+X <- model.matrix(~ t + sint + sin2t + sin3t + cost + cos2t + cos3t, obs_df)
+
+ss_fit <- arima(
+  sim_ts,
+  order = c(2, 0, 0),
+  xreg = X,
+  include.mean = F
+)
+ss_fit
+pacf(ss_fit$residuals)
+
+```
+
+   :::{.callout-warning icon=false appearance="simple"}
+   $\hat{\alpha}_1 = .745$ and $\hat{\alpha}_2 = -.418$, which are very similar to the values used to generate the series (and the GLS values, but not the same). Based on the PACF plot, there does not appear to be  autocorrelation left in the residual error series!
+   :::
+
+One of the main advantages of the state-space representation of the GLS model is that we are able to obtain standard errors for predictions. Sadly, the `predict` function cannot generate confidence intervals and prediction intervals for forecasts from an `arima`, as there is no notion of confidence vs prediction with the state-space approach. Instead, we can generate an approximate 95% prediction interval by adding and subtracting 1.96 times the standard error of the prediction. 
+
+10. [4 pt] Construct approximate 95% prediction intervals for the forecasted values and plot the observed, fitted, and forecasted values on a single plot. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r, indent = "    "}
+tmp <- predict(
+  ss_fit, n.ahead = nrow(forecast_df),
+  newxreg = model.matrix(~ t + sint + sin2t + sin3t + cost + cos2t + cos3t, forecast_df)
+)
+
+cbind(
+  c(tmp$pred) - qt(.975, 130)*c(tmp$se),
+  c(tmp$pred) + qt(.975, 130)*c(tmp$se)
+)
+
+# a few things
+sim_ts <- ts(
+  obs_df$y,
+  freq = 7
+)
+X <- model.matrix(~ t + sint + sin2t + sin3t + cost + cos2t + cos3t, obs_df)
+
+ss_fit <- arima(
+  sim_ts,
+  order = c(0, 0, 0),
+  xreg = X,
+  include.mean = F
+)
+ss_fit
+
+tmp <- predict(
+  ss_fit, 
+  n.ahead = nrow(forecast_df),
+  newxreg = model.matrix(~ t + sint + sin2t + sin3t + cost + cos2t + cos3t, forecast_df)
+)
+tmp$se
+
+
+predict(ols_fit, newdata = forecast_df, se.fit = T)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r, eval = F}
+pred_sefit <- predict(ols_fit, newdata = forecast_df, se.fit = T)
+
+# matches pred exactly
+cbind(
+  pred_sefit$fit - qt(0.975, 132)*pred_sefit$se.fit,
+  pred_sefit$fit + qt(0.975, 132)*pred_sefit$se.fit
+)
+
+
+# now prediction
+pred3 <- predict(ols_fit, newdata = forecast_df, interval = "prediction")
+pred3
+
+# matches pred3 
+cbind(
+  pred_sefit$fit - qt(0.975, 132)*sqrt(pred_sefit$residual.scale^2 + pred_sefit$se.fit^2),
+  pred_sefit$fit + qt(0.975, 132)*sqrt(pred_sefit$residual.scale^2 + pred_sefit$se.fit^2)
+)
+
+```
+

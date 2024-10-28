@@ -1,0 +1,121 @@
+---
+title: "Homework 6"
+format:
+  pdf:
+    fontsize: 12pt
+    geometry:
+      - inner=1.5cm
+      - outer=1.5cm
+      - top=2.5cm
+      - bottom=2.5cm
+    include-in-header:
+      - text: |
+          \addtokomafont{disposition}{\rmfamily}
+          \usepackage{fancyhdr, lastpage, framed, caption, xcolor}
+          \captionsetup[figure]{labelformat=empty}
+          \pagestyle{fancyplain}
+          \fancyhf{}
+          \lhead{\fancyplain{}{STAT 0219: Time Series Analysis}}
+          \rhead{\fancyplain{}{Stratton - HW6}}
+          \fancyfoot[RO, LE] {page \thepage\ of \pageref{LastPage}}
+          \thispagestyle{plain}
+editor: source
+---
+<!-- Note: the YAML header is everything above this line. -->
+\vspace{-3in}
+\textbf{Name:} Your name here  
+\textbf{Due:} 2024/11/04
+\vspace{1.5in}
+
+```{r, include = F}
+rm(list= ls())
+library(tidyverse)
+```
+
+Be sure to submit **both** the .pdf and .qmd file to Canvas by Monday, November 4th at 11:59 pm. The purpose of this assignment is to use simulation to better understand why we need to account for serial correlation in a time series. 
+
+For this assignment, you may use the `generate_ts_reg` function contained in the `helpers.R` script to generate time series with trend, seasonality, and autocorrelated errors from an AR(1) process. 
+
+```{r, fig.dim = c(7, 4)}
+source("helpers.R")
+
+# example: 50 weeks of data
+ex_ts <- generate_ts_reg(
+  1027204,
+  n = 100*7,
+  freq = 7,
+  betas = c(-1, .05, rnorm(6, sd = .5)) # beta0, beta1, and 6 harmonic cycles
+)
+str(ex_ts)
+
+ex_ts$df %>%
+  ggplot() + 
+  geom_line(aes(x = t, y = y)) +
+  theme_bw()
+
+lm(y ~ ., ex_ts$df)
+ex_ts$params$betas
+```
+
+\newpage
+
+**Question 1 [11 pt]** The goal of this assignment is to conduct a *simulation study* that demonstrates why we need to account for serial autocorrelation when fitting regression models. The purpose of this first question is to get our feet wet with the idea of a simulation study. 
+
+1. [2 pt] Use the `generate_ts_reg` function to generate a time series that represents 20 years of monthly data. Set the `beta` vector equal to `c(-1, 0.05, 1, -1, rnorm(10, sd = .5))` and the autocorrelation parameter to `.8`. Plot the resulting time series. 
+
+```{r, indent = "   ", fig.dim = c(7, 4)}
+
+```
+
+2. [2 pt] Fit a linear regression model that includes the time index and all 12 harmonic seasonal cycles. Create a PACF plot of the residuals and comment on how the ACF plot relates to the way you generated the series. 
+
+```{r, indent = "   ", fig.dim = c(7, 4)}
+
+```
+
+   :::{.callout-warning icon=false appearance="simple"}
+   The PACF plot suggests that the residuals are an AR(1) series with $\alpha = .8$, which makes sense because that is exactly what we simulated. 
+   :::
+
+3. [2 pt] Create confidence intervals for the regression coefficients using `confint` and determine which intervals captured the generating parameters (which you can find contained within the output of the `generate_ts_reg` function). 
+
+```{r, indent = "   "}
+
+```
+
+4. [4 pt] Fit a GLS model with an AR(1) correlation structure, create confidence intervals for the regression coefficients, and again determine which intervals captured the generating values. 
+
+```{r, warning = F, message = F, indent = "   "}
+
+```
+
+5. [1 pt] If we were to repeatedly simulate time series like in question 1-1 through 1-4 and calculate 95% confidence intervals for the regression coefficients in the model, approximately what percent of the constructed intervals should capture the generating values, if we are appropriately modeling the uncertainty?
+
+   :::{.callout-warning icon=false appearance="simple"}
+
+   :::
+   
+\newpage
+
+**Question 2 [10 pt]** We are now ready to conduct our simulation study. To do so, repeat the following process 100 times:
+
+- simulate new data with a distinct seed (using the same `betas` and `alpha` as before)
+- fit an OLS model and determine for which parameters the confidence interval captures the generating values, store these values
+- fit a GLS model and determine for which parameters the confidence interval captures the generating values, store these values
+
+Then, calculate the proportion of times (out of 100 simulations) that each model captured the generating values for each of the regression coefficients. Create a visual that displays the resulting proportions and comment on what the results suggest about the importance of accounting for serial autocorrelation when estimating regression coefficients. 
+
+```{r, eval = F}
+# conduct your simulation here and save the results using
+# save(sim, file = "sim.rdata")
+```
+
+```{r, fig.dim = c(7, 6)}
+# then load it here: load("sim.rdata")
+```
+
+:::{.callout-warning icon=false appearance="simple"}
+
+:::
+   
+   
