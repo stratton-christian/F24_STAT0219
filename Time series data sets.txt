@@ -1,0 +1,7 @@
+Time series data sets
+
+Boreal forest grouse: https://datadryad.org/stash/dataset/doi:10.5061/dryad.931zcrjpb#methods
+	- uses mixed model to analyze dat
+
+Review of two studies that ignore temporal correlation: https://academic.oup.com/beheco/article/31/1/222/5610999?login=true#198324077
+	- guppies and mice
