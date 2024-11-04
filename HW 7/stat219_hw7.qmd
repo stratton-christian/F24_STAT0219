@@ -1,0 +1,156 @@
+---
+title: "Homework 7"
+format:
+  pdf:
+    fontsize: 12pt
+    geometry:
+      - inner=1.5cm
+      - outer=1.5cm
+      - top=2.5cm
+      - bottom=2.5cm
+    include-in-header:
+      - text: |
+          \addtokomafont{disposition}{\rmfamily}
+          \usepackage{fancyhdr, lastpage, framed, caption, xcolor}
+          \captionsetup[figure]{labelformat=empty}
+          \pagestyle{fancyplain}
+          \fancyhf{}
+          \lhead{\fancyplain{}{STAT 0219: Time Series Analysis}}
+          \rhead{\fancyplain{}{Stratton - HW7}}
+          \fancyfoot[RO, LE] {page \thepage\ of \pageref{LastPage}}
+          \thispagestyle{plain}
+editor: source
+---
+<!-- Note: the YAML header is everything above this line. -->
+\vspace{-3in}
+\textbf{Name:} Your name here  
+\textbf{Due:} 2024/11/04
+\vspace{1.5in}
+
+```{r, include = F}
+rm(list= ls())
+library(tidyverse)
+library(nlme)
+```
+
+Be sure to submit **both** the .pdf and .qmd file to Canvas by Monday, November 11th at 11:59 pm. The purpose of this assignment is to practice using time series regression methods to analyze data. 
+
+*Boreal forest grouse* The capercaillie (*Tetrao urogallus*) and black grouse (*Tetrao tetrix*) are two species of grouse native to boreal forests in Norway. Recently, a study[^1] was conducted to better understand the temporal dynamics of breeding success among these two species of grouse, which is defined as the ratio of the number of chicks born to a community and the number of hens within that community. Researchers leveraged a unique data set that tracked the breeding success of two populations of grouse over 41 years, and tracked a number of relevant variables, including snow depth and measures of predation.
+
+![[Black grouse](https://www.visitnorway.com/listings/black-grouse-display-from-photo-hide/193183/) (left) and [capercaillie](https://www.phototoursnorway.com/black-grouse-and-capercaillie) (right)](birds.png)
+
+[^1]: [Link](https://onlinelibrary.wiley.com/doi/10.1002/ece3.9327) to paper describing the study.
+
+\newpage
+
+**Part I [16 pt]** Suppose that we are interested in determining whether there is a difference in breeding success between the two species after accounting for changes over time. 
+
+1. [2 pt] Create a plot that visualizes the research question and comment on what the plot suggests about the research question. 
+
+```{r, indent = "   ", fig.dim = c(7, 3), message = F}
+
+```
+
+   :::{.callout-warning icon=false appearance="simple"}
+
+   :::
+   
+2. [3 pt] Before fitting any models, create a pacf plot of the raw `Breed.succ` for both species and comment on what the plot suggests about autocorrelation. 
+
+```{r, indent = "   ", fig.dim = c(7, 6)}
+
+```
+
+   :::{.callout-warning icon=false appearance="simple"}
+
+   :::
+
+3. [1 pt] Fit an ordinary least squares model to address the research question. 
+
+```{r, indent = "   ", fig.dim = c(7, 3)}
+
+```
+
+4. [3 pt] Assess the linearity, normality, and constant variance assumptions of the ordinary least squares model. 
+
+```{r, indent = "   ", fig.dim = c(7, 6)}
+
+```
+
+   :::{.callout-warning icon=false appearance="simple"}
+
+   :::
+   
+5. [3 pt] Assess the independence assumption for the model, referencing plots as needed. (hint: look at a pacf plot!)
+
+   :::{.callout-important}
+   When creating ACF and PACF plots of the residuals, the observations must be in sequential order!
+   :::
+   
+```{r, indent = "   ", fig.dim = c(7, 4)}
+
+```
+
+   :::{.callout-warning icon=false appearance="simple"}
+
+   :::
+
+6. [4 pt] Regardless of your previous assessments, answer the research question, supporting your answer with an appropriate statistical test and confidence interval for parameter of interest. 
+
+```{r, indent = "   "}
+
+```
+   
+   :::{.callout-warning icon=false appearance="simple"}
+
+   :::
+   
+\newpage
+
+**Part II [10 pt]** In this part, we specifically focus on the error structure. 
+
+7. [2 pt] Is the above ordinary least squares model sufficient for this analysis? Or do we require a more complicated time series model? Explain your answer. 
+
+   :::{.callout-warning icon=false appearance="simple"}
+
+   :::
+
+8. [2 pt] Regardless of your answer to the previous question, refit the regression model imposing an AR(2) process on the residuals using generalized least squares and print a summary of the model. 
+
+   :::{.callout-tip}
+   By default, the `corARMA` function assumes that each observation represents a time point, and that your observations are ordered according to time. In order to account for the time structure between the groups, you will need to use the following correlation structure: `corARMA(form = ~ 1 | Species, p = 2, q = 0)`, which results in a pooled estimate of the autoregressive parameters between the two species.
+   :::
+
+```{r, indent = "   ", fig.dim = c(7, 3)}
+
+```
+
+9. [2 pt] Reassess the independence assumption using the residuals from the gls fit. 
+
+```{r, indent = "   ", fig.dim = c(7, 4)}
+
+```
+
+   :::{.callout-warning icon=false appearance="simple"}
+
+   :::
+
+10. [4 pt] Compare and contrast the p-value and confidence interval obtained from the gls fit to those obtained from the ols fit. Provide an explanation for what you notice. 
+
+```{r, indent = "    "}
+
+```
+
+    :::{.callout-warning icon=false appearance="simple"}
+
+    :::
+   
+\newpage
+   
+**Part III [1 pt]** List at least one and up to three other people you will be working with for the project (i.e. between two and four people per group).
+   
+:::{.callout-warning icon=false appearance="simple"}
+
+:::
+   
+   

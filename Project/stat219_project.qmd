@@ -1,0 +1,112 @@
+---
+title: "Final Project"
+format:
+  pdf:
+    fontsize: 12pt
+    geometry:
+      - inner=1.5cm
+      - outer=1.5cm
+      - top=2.5cm
+      - bottom=2.5cm
+    include-in-header:
+      - text: |
+          \addtokomafont{disposition}{\rmfamily}
+          \usepackage{fancyhdr, lastpage, framed, caption, xcolor}
+          \captionsetup[figure]{labelformat=empty}
+          \pagestyle{fancyplain}
+          \fancyhf{}
+          \lhead{\fancyplain{}{STAT 0219: Time Series Analysis}}
+          \rhead{\fancyplain{}{Stratton - Project}}
+          \fancyfoot[RO, LE] {page \thepage\ of \pageref{LastPage}}
+          \thispagestyle{plain}
+editor: source
+---
+\vspace{-1in}
+
+The purpose of the final project is to demonstrate at least one of the methods that we have learned in this course by analyzing a data set to answer a research question of your choosing that requires time series methods. Your research question may concern estimation (answering a question), or forecasting (predicting future values), or both. You may choose the data set, but you must use one of the more advanced methods in the course (regression or ARMA/ARIMA). You may find data wherever you would like, and I am happy to help you procure data that you are interested in (via web-scraping, for example). Some nice resources for finding data include:
+
+- [OpenIntro R Package](https://www.openintro.org/data)
+- [Lock5Data R Package](https://cran.r-project.org/web/packages/Lock5Data/Lock5Data.pdf)
+- [Kaggle](https://www.kaggle.com/)
+- [Data.world](https://data.world/)
+- Asking ChatGPT to help you find a data set about a particular topic
+- [Dryad Digital Repository](https://datadryad.org/search)
+
+The project must be completed with at least one other person and up to three other people (i.e. groups may range between two and four members). The project will culminate as a written report and five-minute in-class presentation. The report should be appended to this document. For details on the scoring, see the rubric on the next page. 
+
+\vfill
+
+\newpage
+
+## Written report rubric
+
+**Introduction [3 pt]**
+
+- Motivate the research question
+- Research question state in a way that can be answered using the methods we have discussed
+- Numeric and visual summaries of data provided
+
+**Methods [5 pt]**
+
+- Appropriate statistical method used
+- Statistical method described
+- Model assumptions assessed
+
+**Results [10 pt]**
+
+- Numeric summaries provided via table
+- Graphical summaries provided
+- Results interpreted in context
+
+**Discussion [2 pt]**
+
+- Findings summarized
+- Opportunities for improvement discussed
+
+**Other [10 pt]**
+
+- Formatting (.pdf, code included as appendix)
+- Writing quality (no typos, etc)
+- Overall impression
+   - Would this report be appropriate to share with a general audience? 
+   - Is the document well formatted and tidy?
+
+\newpage
+
+## Presentation rubric
+
+**Timing [5 pt]**
+
+- Didn't go significantly under or over time.
+
+**Content [10 pt]**
+
+- Slides are nicely organized, professional looking
+- Problem motivated
+- Method discussed
+- Results discussed
+
+\newpage
+
+\begin{center}
+{\Huge \textbf{Title}} 
+
+\textit{Authors}
+\end{center}
+
+<!-- ![Fancy image if you like]() -->
+
+\newpage
+
+## Introduction
+
+## Methods
+
+## Results
+
+## Discussion
+
+## Code appendix
+
+
+

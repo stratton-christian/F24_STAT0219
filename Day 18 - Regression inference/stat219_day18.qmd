@@ -1,0 +1,152 @@
+---
+title: "Day 18 - Lab: Regression inference"
+format:
+  pdf:
+    fontsize: 12pt
+    geometry:
+      - inner=1.5cm
+      - outer=1.5cm
+      - top=2.5cm
+      - bottom=2.5cm
+    include-in-header:
+      - text: |
+          \addtokomafont{disposition}{\rmfamily}
+          \usepackage{fancyhdr, lastpage, framed, caption, xcolor, setspace}
+          \captionsetup[figure]{labelformat=empty}
+          \pagestyle{fancyplain}
+          \fancyhf{}
+          \lhead{\fancyplain{}{STAT 0219: Time Series Analysis}}
+          \rhead{\fancyplain{}{Stratton - Day 18}}
+          \fancyfoot[RO, LE] {page \thepage\ of \pageref{LastPage}}
+          \thispagestyle{plain}
+editor: source
+---
+\vspace{-3in}
+\textbf{Name:} Your name here  
+\textbf{Due:} 2024/11/13  
+\vspace{1.5in}
+
+
+```{r, include = F}
+rm(list = ls())
+library(tidyverse)
+library(nlme)
+```
+
+## Introduction
+
+In this assignment, we will get some more practice with analyzing real data using time series regression models. To motivate our efforts, we will use average monthly $CO_2$ readings from the Mauna Loa observatory[^1], which have been collected continuously since March of 1958. Is there evidence that the magnitude of the seasonal effect has increased over time, after accounting for the trend?
+
+[^1]: [Link](https://gml.noaa.gov/ccgg/trends/data.html) to the NOAA webpage. 
+
+***
+
+\newpage
+
+:::{.callout-note title="Regression inference"}
+In this class, we focus on two tools for making inference about regression models: the t-test and the extra sum of squares F-test. We introduce these methods briefly here, but expect to learn more about each in a regression class. The t-test, which is obtained from the `summary` output of a model, tests
+$$
+H_0: \beta = 0 \hspace{5mm} \text{vs}\hspace{5mm} H_a: \beta \neq 0
+$$
+holding all other predictor variables constant in the model. The distribution of $$t = \frac{\hat{\beta}}{SE(\hat{\beta})}$$ under the null hypothesis is $t_{df}$, where $df$ denotes the degrees of freedom associated with the residual error. 
+
+\vspace{.125in}
+
+The extra sum of squares F-test is used to compare nested models. For example, consider two models:
+$$
+\begin{split}
+y_i &= \beta_0 + \beta_1 x_{1i} + \beta_2 x_{2i} + \beta_3 x_{3i} + \epsilon_i \\
+y_i &= \beta_0 + \beta_1 x_{1i} + \epsilon_i \\
+\end{split}
+$$
+We say that the second model is nested within the first model, since all parameters in the second model also exist in the first model. We can use these two models to test the following hypotheses:
+$$
+H_0: \beta_2 = \beta_3 = 0 \hspace{5mm} \text{vs}\hspace{5mm} H_a: \text{at least one }\beta_i\text{ does not equal 0 for }i\in\{2, 3\}
+$$
+Under the null hypothesis, the distribution of the test statistic is $F_{2,df}$, which is an $F$ distribution with two numerator and $df$ denominator degrees of freedom, where $df$ is the degrees of freedom associated with the residual error. To perform this test in R, we use the `anova` function: `anova(fit1, fit2)` compares models `fit1` and `fit2` in this way. 
+:::
+
+\newpage
+
+```{r, include = F}
+rm(list = ls())
+library(tidyverse)
+```
+
+1. [1 pt] Read the Mauna Loa data in to R and filter the data to contain years prior to 1990 (not including 1990). 
+
+```{r, indent = "   ", message = F}
+
+```
+
+2. [2 pt] Plot the average $CO_2$ mole fraction (ppm) over time and describe the series in terms of trend and seasonality. 
+
+```{r, indent = "   ", fig.dim = c(7, 3)}
+
+```
+
+   :::{.callout-warning icon=false appearance="simple"}
+
+   :::
+
+3. [2 pt] Fit two regression models using ordinary least squares: one that includes a time by month interaction and time squared, and one that includes time, time squared, and month (no interaction).
+
+```{r, indent = "   "}
+
+```
+
+4. [4 pt] Assess the independence, normality, constant variance, and linearity assumptions for the interaction model. 
+
+```{r, indent = "   ", fig.dim = c(7, 7)}
+
+```
+
+   :::{.callout-warning icon=false appearance="simple"}
+
+   :::
+
+5. [2 pt] Ignore any violations of the assumptions for now. Is the additive model nested within the interaction model? Why or why not?
+
+   :::{.callout-warning icon=false appearance="simple"}
+
+   :::
+
+6. [2 pt] Use an extra sums of squares F-test to address the research question and write up a conclusion that references: the test statistic, distribution of the test statistic under the null hypothesis, and the p-value. Ignore the violation of independence for now. 
+```{r, indent = "   "}
+
+```
+
+   :::{.callout-warning icon=false appearance="simple"}
+
+   :::
+
+7. [4 pt] Refit both regression models using GLS and incorporate an AR(2) correlation structure in each model **using maximum likelihood as the method**. Reassess the independence assumption for the interaction model using the new fit. 
+
+```{r, indent = "   ", fig.dim = c(7, 3)}
+
+```
+
+   :::{.callout-warning icon=false appearance="simple"}
+
+   :::
+   
+8. [2 pt] Recreate the extra sums of squares F-test using the GLS models and comment on the differences.
+
+```{r, indent = "   "}
+
+```
+   
+   :::{.callout-warning icon=false appearance="simple"}
+
+   :::
+   
+9. [2 pt] Plot the raw time series, fitted values from the interaction model, and fitted values from the additive model on a single plot and comment on the differences. 
+
+```{r, indent = "   ", fig.dim = c(7, 3)}
+
+```
+
+   :::{.callout-warning icon=false appearance="simple"}
+
+   :::
+
