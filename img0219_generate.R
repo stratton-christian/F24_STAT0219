@@ -1,5 +1,9 @@
 # fit model
 library(tidyverse)
+data("AirPassengers")
+ap_full <- AirPassengers
+ap_red <- window(ap, start = c(1949, 1), end = c(1956, 12))
+
 hw2 <- HoltWinters(
   ap_red,
   seasonal = "mult",
@@ -16,6 +20,14 @@ c2 <- "#FF8C3D"
 c2 <- "#f9cca9"
 c3 <- "#e6ccf3"
 c2 <- "#ce9f80"
+c2 <- "#75500f"
+c2 <- "#614617"
+c3 <- "#95B46A"
+c3 <- "#709255"
+
+#638475 - hooker's green
+#709255 - asparagus
+#95B46A - olivine
 
 # plot
 # library(ggthemr)
@@ -45,25 +57,23 @@ bind_rows(
   ) +
   geom_ribbon(
     aes(ymin = lwr, ymax = upr), 
-    linetype = 2,
-    alpha = 0.15
+    linetype = 0,
+    alpha = 0.25
     # linewidth = 1.15
   ) + 
   # theme_bw() +
   # theme_minimal() +
   theme_void() + 
-  geom_vline(aes(xintercept = 1957), linetype = "dotted") +
+  geom_vline(aes(xintercept = 1957), linetype = "dotted", col = c3) +
   labs(
     x = "Date",
     y = "Air Passengers (1000s)"
   ) +
-  # scale_color_manual(values = c("#bcc4d2", "#d8ae5a")) +
-  # scale_color_manual(values = c("#425563", "#DFD1A7"))
-  scale_color_manual(values = c(c1, c2)) +
+  scale_color_manual(values = c(c3, c2)) +
   theme(legend.position="none")
 ggsave(
   filename = "img0219.png", dpi = 2000, 
-  scale = .25,
+  scale = .15,
   width = 10, 
   height = 6,
   units = "in"
@@ -96,7 +106,7 @@ stat0219_hex <- sticker(
   u_size=2.5, u_color = c1,u_family="bitter", 
   u_angle=0,u_x=0.53, u_y=0.37,
   #save to... 
-  filename = "STAT0116_hex_sticker.png")
+  filename = "STAT0219_hex_sticker.png")
 
 plot(stat0219_hex)
 

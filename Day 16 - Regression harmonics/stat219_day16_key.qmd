@@ -215,6 +215,9 @@ ts_df %>%
     aes(x = t, ymin = lwr, ymax = upr), alpha = .25
   ) +
   theme_bw()
+
+# add base R
+
 ```
 
    :::{.callout-warning icon=false appearance="simple"}
