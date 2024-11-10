@@ -1,6 +1,7 @@
 # fit model
 library(tidyverse)
 data("AirPassengers")
+ap <- AirPassengers
 ap_full <- AirPassengers
 ap_red <- window(ap, start = c(1949, 1), end = c(1956, 12))
 
