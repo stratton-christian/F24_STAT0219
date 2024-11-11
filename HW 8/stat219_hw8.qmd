@@ -1,0 +1,83 @@
+---
+title: "Homework 8"
+format:
+  pdf:
+    fontsize: 12pt
+    geometry:
+      - inner=1.5cm
+      - outer=1.5cm
+      - top=2.5cm
+      - bottom=2.5cm
+    include-in-header:
+      - text: |
+          \addtokomafont{disposition}{\rmfamily}
+          \usepackage{fancyhdr, lastpage, framed, caption, xcolor}
+          \captionsetup[figure]{labelformat=empty}
+          \pagestyle{fancyplain}
+          \fancyhf{}
+          \lhead{\fancyplain{}{STAT 0219: Time Series Analysis}}
+          \rhead{\fancyplain{}{Stratton - HW8}}
+          \fancyfoot[RO, LE] {page \thepage\ of \pageref{LastPage}}
+          \thispagestyle{plain}
+editor: source
+---
+<!-- Note: the YAML header is everything above this line. -->
+\vspace{-3in}
+\textbf{Name:} Your name here  
+\textbf{Due:} 2024/11/18
+\vspace{1.5in}
+
+```{r, include = F}
+rm(list= ls())
+library(tidyverse)
+library(nlme)
+```
+
+Be sure to submit **both** the .pdf and .qmd file to Canvas by Monday, November 18th at 11:59 pm. The purpose of this homework is to ensure that you are making meaningful progress on your project prior to the exam and break. 
+
+**THE NORMAL LATE POLICY DOES NOT APPLY FOR THIS ASSIGNMENT. LATE WORK WILL NOT BE ACCEPTED AND WILL RECEIVE A 0.**
+
+1. [1 pt] List all group members for your project. You can all turn in the same copy of this assignment. 
+
+   :::{.callout-warning appearance="simple" icon=false}
+   
+   :::
+   
+2. [1 pt] Provide a link to the data set that you are using for the project. If the data are not found online, describe where you obtained the data.
+
+   :::{.callout-warning appearance="simple" icon=false}
+   
+   :::   
+   
+3. [2 pt] Define the research question for your project.
+
+   :::{.callout-warning appearance="simple" icon=false}
+   
+   :::   
+   
+4. [3 pt] Does your research question entail inference, forecasting, or both?
+
+   :::{.callout-warning appearance="simple" icon=false}
+   
+   :::  
+   
+5. [4 pt] What statistical method will you use to address your research question? Give me a little meat here. For example:
+
+   - Will you use purely stochastic approaches (i.e. `auto.arima` without regressors) or regression?
+   - If forecasting, how will you assess the quality of your model?
+   - If conducting inference, to what models will you compare to answer your research question?
+
+   :::{.callout-warning appearance="simple" icon=false}
+   
+   :::  
+
+6. [5 pt] Read your data set into R and create a figure that visualizes your research question. Comment on what the figure suggests about your research question (you do not need to fit any models yet - save that for the project). 
+
+```{r, indent = "   ", fig.dim = c(7, 3.5)}
+
+```
+
+   :::{.callout-warning appearance="simple" icon=false}
+   
+   :::
+

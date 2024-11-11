@@ -1,0 +1,172 @@
+---
+title: "Day 19 - ARMA models"
+format:
+  pdf:
+    fontsize: 12pt
+    geometry:
+      - inner=1.5cm
+      - outer=1.5cm
+      - top=2.5cm
+      - bottom=2.5cm
+    include-in-header:
+      - text: |
+          \addtokomafont{disposition}{\rmfamily}
+          \usepackage{fancyhdr, lastpage, framed, caption, xcolor, setspace}
+          \captionsetup[figure]{labelformat=empty}
+          \pagestyle{fancyplain}
+          \fancyhf{}
+          \lhead{\fancyplain{}{STAT 0219: Time Series Analysis}}
+          \rhead{\fancyplain{}{Stratton - Day 19}}
+          \fancyfoot[RO, LE] {page \thepage\ of \pageref{LastPage}}
+          \thispagestyle{plain}
+editor: source
+---
+\vspace{-1in}
+
+## Introduction
+
+In this set of notes, we introduce moving average processes, MA($q$), which are autoregressive processes on the error terms. We then combine these models with the AR($p$) process to develop ARMA($p, q$) models, which are valuable for modeling various types of serial autocorrelation in residual error series.
+
+```{r, echo = T, warning = F, message = F}
+# packages
+library(tidyverse)
+library(lubridate)
+```
+
+\newpage
+
+## Moving average processes
+
+:::{.callout-note title="Moving average processes"}
+A time series $\{x_t\}$ is a ___________________________________ or MA($q$) if
+$$
+x_t = w_t + \beta_1 w_{t-1} + \beta_2 w_{t-2}+ \dots + \beta_q w_{t-q}
+$$
+where $\{w_t\}$ is white noise with mean 0 and variance $\sigma^2_w$ and the $\beta_i$ are the model parameters. It can be shown that the MA($q$) model can be expressed as a polynomial of order $q$ in the backshift operator:
+$$
+x_t = (1 + \beta_1\boldsymbol{B} + \beta_2 \boldsymbol{B}^2 + \dots + \beta_q \boldsymbol{B}^q)w_t = \phi_q(\boldsymbol{B})w_t
+$$
+A moving average process is said to be ________________________ if it can be expressed as a stationary autoregressive process of infinite order without an error term. A MA($q$) process is invertible if the roots of $\phi_q(\boldsymbol{B})$ all exceed unity in magnitude. 
+
+The autocorrelation function, for $k \geq 0$, is
+$$
+\rho(k) = \begin{cases}
+1 & k = 0 \\
+\frac{ \sum_{i=0}^{q-k}\beta_i\beta_{i+k}}{\sum_{i=0}^q \beta_i^2}  & k = 1, \dots, q \\
+0 & k > q
+\end{cases}
+$$
+where $\beta_0$ is always assumed to be 1. 
+:::
+
+Express the the MA(2) series: $x_t = w_t + .5 w_{t-1} - .4 w_{t-2}$ in terms of $\phi_q(\boldsymbol{B})$ and determine if the process is invertible. 
+
+
+\newpage
+
+## Simulation and fitting
+
+Simulate an MA(3) process with $\beta_1 = .8$, $\beta_2 = .6$, and $\beta_3 = .4$. 
+
+```{r, fig.dim = c(7, 4)}
+set.seed(11112024)
+x <- w <- rnorm(1000)
+b <- c(.8, .6, .4)
+for(t in 4:1000){
+  for(j in 1:3) x[t] <- x[t] + b[j] * w[t-j]
+}
+plot(x, type = "l")
+acf(x)
+```
+
+```{r}
+ma <- arima(x, order = c(0, 0, 3))
+ma
+```
+
+\newpage
+
+## ARMA($p, q$) processes
+
+:::{.callout-note title="ARMA processes"}
+A time series $\{x_t\}$ is a ___________________________________ or ARMA($p,q$) if
+$$
+x_t = \alpha_1 x_{t-1} + \dots + \alpha_p x_{t-p} + w_t + \beta_1 w_{t-1} + \dots + \beta_q w_{t-q}
+$$
+where $\{w_t\}$ is white noise with mean 0 and variance $\sigma^2_w$. We can express this model using the backshift operator on both $x_t$ and $w_t$:
+$$
+\begin{split}
+x_t - \alpha_1x_{t-1} - \dots - \alpha_p x_{t-p} &= w_t + \beta_1 w_{t-1} + \dots + \beta_q w_{t-q} \\
+(1 - \alpha_1 \boldsymbol{B} - \dots - \alpha_p \boldsymbol{B}^p )x_t &= (1 + \beta_1 \boldsymbol{B} + \dots + \beta_q \boldsymbol{B}^q) w_t\\
+\theta_p(\boldsymbol{B})x_t &= \phi_q(\boldsymbol{B})w_t \\
+\end{split}
+$$
+
+The autocorrelation function is reasonably complicated, and I do not expect you to know it. 
+:::
+
+\doublespacing
+A few notes about ARMA($p, q$) processes:
+
+- The process is stationary if all the roots of $\theta_p(\boldsymbol{B})$ exceed unity in magnitude.
+
+- The process is invertible if all the roots of $\phi_q(\boldsymbol{B})$ exceed unity in magnitude.
+
+- Fitting an ARMA($p, q$) model will often require less parameters than fitting an AR($p$) or MA($q$) model on its own. This idea is called *parameter parsimony*.
+
+- When $\theta_p(\boldsymbol{B})$ and $\phi_q(\boldsymbol{B})$ share a common factor, a stationary model can be simplified. For example, $(1 - \frac{1}{2}\boldsymbol{B})(1 - \frac{1}{3}\boldsymbol{B})x_t = (1 - \frac{1}{2}\boldsymbol{B})w_t$ can be written as $(1 - \frac{1}{3}\boldsymbol{B})x_t = w_t$.
+
+\singlespacing
+
+\newpage
+
+Express the following model in ARMA($p, q$) notation and determine whether it is stationary and/or invertible. Ensure that the ARMA($p, q$) notation is expressed in simplest form. 
+
+$$
+x_t = x_{t-1} - \frac{1}{4}x_{t-2} + w_t + \frac{1}{2}w_{t-1}
+$$
+\newpage
+
+## Simulation and fitting
+
+Complex time series may be simulated using the `arima.sim` function, and fitted using either `arima` or `auto.arima` in the forecast package. The latter using information criterion to select the best stochastic model, ranging from simple AR($p$) models to seasonal ARIMA models (more on this next week).
+
+```{r, warning = F, message = F}
+set.seed(11102024)
+x <- arima.sim(
+  n = 10000, 
+  model = list(
+    ar = c(-.6, .2),
+    ma = c(.4, .7)
+  )
+)
+arima(x, order = c(2, 0, 2))
+
+# auto.arima returns the best ARIMA model using AIC, AICc, or BIC
+library(forecast)
+auto.arima(x, max.d = 0, max.D = 0, max.P = 0, max.Q = 0)
+```
+
+\newpage
+
+## What to know
+
+As the models we consider increase in complexity, it might be helpful to keep track of what is expected of you. You should be able to:
+
+- Write an ARMA($p, q$) process in terms of its characteristic polynomials
+
+- Determine whether the ARMA($p, q$) process is stationary and/or invertible
+
+- Express the ARMA($p, q$) in its simplest form
+
+- Simulate from an ARMA($p, q$) process using `arima.sim`
+
+- Fit a particular ARMA($p, q$) model using `arima`
+
+- Use `auto.arima` to estimate the best ARMA($p, q$) model for an observed data set.
+
+- Notice that the models are fit using `arima` and `auto.arima`, meaning you have access to all the tools introduced with state-space models! You may use `xreg` to specify regression coefficients and `predict` to forecast the series. 
+
+- In general, *know when a time series model accounts for the serial autocorrelation that exists within the data*. **No matter what model you fit, the residuals should represent a white-noise series!**
+
+

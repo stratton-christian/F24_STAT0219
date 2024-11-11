@@ -1,0 +1,212 @@
+---
+title: "Day 20 - Lab: ARMA models"
+format:
+  pdf:
+    fontsize: 12pt
+    geometry:
+      - inner=1.5cm
+      - outer=1.5cm
+      - top=2.5cm
+      - bottom=2.5cm
+    include-in-header:
+      - text: |
+          \addtokomafont{disposition}{\rmfamily}
+          \usepackage{fancyhdr, lastpage, framed, caption, xcolor, setspace}
+          \captionsetup[figure]{labelformat=empty}
+          \pagestyle{fancyplain}
+          \fancyhf{}
+          \lhead{\fancyplain{}{STAT 0219: Time Series Analysis}}
+          \rhead{\fancyplain{}{Stratton - Day 18}}
+          \fancyfoot[RO, LE] {page \thepage\ of \pageref{LastPage}}
+          \thispagestyle{plain}
+editor: source
+---
+\vspace{-3in}
+\textbf{Name:} Your name here  
+\textbf{Due:} 2024/11/20  
+\vspace{1.5in}
+
+
+```{r, include = F}
+rm(list = ls())
+library(tidyverse)
+library(nlme)
+```
+
+## Introduction
+
+In this assignment, we will get some more practice with analyzing real data using time series models that incorporate ARMA($p, q$) processes. In this lab, we will return to the electricity data that were introduced when decomposing time series at the start of the courses. As a reminder, this data set describes the monthly supply of electricity (in millions of kWh) in Australia over the period of January 1958 to December of 1990, according to the Australian Bureau of Statistics. The code below reads in the series.
+
+```{r, warning = F, message = F}
+cbe <- read_delim("cbe.dat")
+elec <- dplyr::select(cbe, elec)
+```
+
+***
+
+\newpage
+
+1. [2 pt] Create a data frame that includes the electricity measurement, the month, a scaled index for time (to have mean 0 and standard deviation 1), and the scaled time index squared.
+
+```{r, indent = "   ", message = F}
+elect_tbl <- elec %>%
+  mutate(
+    t = 1:n(),
+    scaled_t = c(scale(t)),
+    scaled_t2 = c(scaled_t^2),
+    month = rep(1:12, length(1958:1990)) %>% factor(),
+    year = rep(1958:1990, each = 12),
+    dt = ym(paste0(year, "-", month))
+  )
+elect_tbl
+```
+
+2. [2 pt] Plot electricity over time and describe the series in terms of trend and seasonality. 
+
+```{r, indent = "   ", fig.dim = c(7, 3)}
+elect_tbl %>% ggplot() + geom_line(aes(x = dt, y = elec)) + theme_bw()
+```
+
+   :::{.callout-warning icon=false appearance="simple"}
+   There seems to be an increasing quadratic relationship with time, and a clear seasonal effect in which electricity peaks during June through August. 
+   :::
+
+3. [4 pt] Fit a regression model of the form `elect ~ scaled_t + scaled_t2 + month` and assess the assumptions for the fitted model. 
+
+```{r, indent = "   ", fig.dim = c(7, 7)}
+ols_fit <- lm(elec ~ scaled_t + scaled_t2 + month, elect_tbl)
+par(mfrow = c(3, 2))
+plot(ols_fit)
+acf(resid(ols_fit))
+pacf(resid(ols_fit))
+```
+
+   :::{.callout-warning icon=false appearance="simple"}
+   - Independence: The ACF and PACF plots suggest strong serial correlation in the residuals (at lags 1, 3, 6, 7, etc), so this assumption is violated. 
+   
+   - Constant variance: there appears to be some fanning in the residuals vs fitted plot, suggesting that this assumption is also violated
+   
+   - Linearity: there is perhaps some leftover curvature in the residuals vs fitted plot, but it is hard to tell with the non-constant variance
+   
+   - Normality: the points do not follow the hypothesized QQ line, meaning this assupmtion is also violated. However, with 360+ observations, the CLT will certainly provide approximately normally distributed sampling distributions of the regression coefficients. 
+   :::
+
+4. [2 pt] Fit the same model again, this time using `log(elec)` as the response. Which assumptions are still violated?
+
+```{r, indent = "   ", fig.dim = c(7, 7)}
+ols_fit2 <- lm(log(elec) ~ scaled_t + scaled_t2 + month, elect_tbl)
+par(mfrow = c(3, 2))
+plot(ols_fit2)
+acf(resid(ols_fit2))
+pacf(resid(ols_fit2))
+```
+
+   :::{.callout-warning icon=false appearance="simple"}
+   The log transformation helped with everything except linearity and independence. There is definitely some leftover curvature in the residuals vs fitted plot, and we still have serial correlation in the residuals.
+   :::
+
+5. [2 pt] Ignore any violations of the assumptions for now (except for independence) and use the log-transformed structure for all remaining questions. Use `arima` to fit the regression model with an AR(1) correlation structure. Assess the residual serial correlation. 
+
+```{r, indent = "   ", fig.dim = c(7, 4)}
+elect_ts <- ts(
+  log(elect_tbl$elec),
+  start = c(1958, 1),
+  freq = 12
+)
+ss_fit1 <- arima(
+  elect_ts,
+  order = c(1, 0, 0),
+  xreg = model.matrix(~ scaled_t + scaled_t2 + month, elect_tbl),
+  include.mean = F
+)
+par(mfrow = c(1, 2))
+acf(resid(ss_fit1))
+pacf(resid(ss_fit1))
+```
+
+   :::{.callout-warning icon=false appearance="simple"}
+   Still quite bad! Lots of serial correlation at multiple lags. 
+   :::
+
+6. [2 pt] Use `arima` to fit the regression model with an ARMA(1, 1) structure. Assess the residual serial correlation. 
+
+```{r, indent = "   ", fig.dim = c(7,4)}
+ss_fit2 <- arima(
+  elect_ts,
+  order = c(1, 0, 1),
+  xreg = model.matrix(~ scaled_t + scaled_t2 + month, elect_tbl),
+  include.mean = F
+)
+par(mfrow = c(1, 2))
+acf(resid(ss_fit2))
+pacf(resid(ss_fit2))
+```
+
+   :::{.callout-warning icon=false appearance="simple"}
+   Better, but still residual correlation at multiple lags. Notably, adding the MA(1) component removed the residual correlation that exists at lag 1 (which should make sense!)
+   :::
+
+7. [4 pt] Use the `auto.arima` function in the `forecast` package to pick the best non-seasonal ARMA model (set `max.d, max.D, max.P, max.Q` all equal to 0) for this regression model and print off the fit. Assess the residual serial correlation. You will need to set `allowmean = F` and `allowdrift = F` in the function call, since both the mean and the drift are included in our regression model (the y-intercept and the slope with time).
+
+```{r, indent = "   ", fig.dim = c(7, 4)}
+library(forecast, quietly = T)
+ss_fit3 <- auto.arima(
+  elect_ts,
+  max.d = 0,
+  max.D = 0,
+  max.P = 0,
+  max.Q = 0,
+  xreg = model.matrix(~ scaled_t + scaled_t2 + month, elect_tbl),
+  allowmean = F,
+  allowdrift = F
+)
+ss_fit3
+par(mfrow = c(1, 2))
+acf(resid(ss_fit3))
+pacf(resid(ss_fit3))
+```
+
+   :::{.callout-warning icon=false appearance="simple"}
+   It chooses the same ARMA(1,1) model! So just the same as before. Looks like we cannot do much better within the ARMA($p, q$) framework...
+   :::
+   
+8. [4 pt] Allow `auto.arima` to choose any form for the errors in the regression model by no longer setting `max.d, max.D, max.P, max.Q` equal to 0 (might take a second or two). You will again need to turn off the drift and mean parameters. Print off the fit and assess the residual correlation. 
+
+```{r, indent = "   ", fig.dim = c(7, 4)}
+ss_fit4 <- auto.arima(
+  elect_ts,
+  xreg = model.matrix(~ scaled_t + scaled_t2 + month, elect_tbl),
+  allowmean = F,
+  allowdrift = F
+)
+ss_fit4
+par(mfrow = c(1, 2))
+acf(resid(ss_fit4))
+pacf(resid(ss_fit4))
+```
+   
+   :::{.callout-warning icon=false appearance="simple"}
+   We are getting close! Still some leftover correlation at later lags (3 in particular: lags 11, 17, and 19)
+   :::
+   
+9. [4 pt] Finally, omit the regression model all together and allow `auto.arima` to select the best model. Print off the model and assess the residual correlation.  
+
+```{r, indent = "   ", fig.dim = c(7, 4)}
+ss_fit5 <- auto.arima(
+  elect_ts
+)
+ss_fit5
+par(mfrow = c(1, 2))
+acf(resid(ss_fit5))
+pacf(resid(ss_fit5))
+```
+
+   :::{.callout-warning icon=false appearance="simple"}
+   Pretty good now! Not perfect, but pretty good. The remaining correlation that exists at later lags is likely a function of information we do not have (perhaps the average winter temperature, for example)
+   :::
+   
+10. [2 pt] We will learn about the model that `auto.arima` selected in question 8 and 9 next week. For now, comment on the advantages and disadvantages of the purely stochastic approach implemented by `auto.arima` with no `xreg` relative to including predictor variables in a regression model. 
+
+    :::{.callout-warning icon=false appearance="simple"}
+    The stochastic approach is nice because it usually does a decent job accounting for serial correlation. However, you lose the ability to make inferences about potential variables of interest. For example, the stochastic approach prevents us from including other factors that might explain the electricity use, such as the average winter temperature, or something like that.
+    :::
