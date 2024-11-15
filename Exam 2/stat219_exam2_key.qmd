@@ -1,0 +1,189 @@
+---
+title: "Exam 1"
+format:
+  pdf:
+    fontsize: 12pt
+    geometry:
+      - inner=1.5cm
+      - outer=1.5cm
+      - top=2.5cm
+      - bottom=2.5cm
+    include-in-header:
+      - text: |
+          \addtokomafont{disposition}{\rmfamily}
+          \usepackage{fancyhdr, lastpage, framed, caption, xcolor, setspace}
+          \captionsetup[figure]{labelformat=empty}
+          \pagestyle{fancyplain}
+          \fancyhf{}
+          \lhead{\fancyplain{}{STAT 0219: Time Series Analysis}}
+          \rhead{\fancyplain{}{Stratton - Exam 2}}
+          \fancyfoot[RO, LE] {page \thepage\ of \pageref{LastPage}}
+          \thispagestyle{plain}
+editor: source
+---
+<!-- Note: the YAML header is everything above this line. -->
+\vspace{-3in}
+\textbf{Name:}   
+\textbf{Due:} 2024/12/01
+\vspace{1.5in}
+
+Be sure to submit **both** the .pdf and .qmd file to Canvas by Sunday, December 1st at 11:59 pm. 
+
+```{r, message = F, warning = F, echo = T, include = F}
+rm(list = ls())
+# library packages for data manipulation
+library(tidyverse)
+set.seed(11142024)
+```
+
+:::{.callout-important}
+You may use any resource to complete this except **except** for other people (classmates, other faculty members, your parents, etc.) Please do not discuss this exam with anyone but me, and be sure to **cite all references and materials used to answer each question.** Please type your name below to acknowledge that you have not discussed this exam with anyone else. 
+:::
+
+Your name:
+
+\vspace{1in}
+
+\doublespacing
+
+**Points:**
+
+  - [5 pts] Formatting 
+  - Question 1 
+  - Question 2
+
+\newpage
+
+\singlespacing
+
+**Question 1**
+
+```{r, message = F, eval = F}
+# leaving this in the exam so that you can see what was done to clean the data
+# read in the data
+fish <- read_csv("fish/TimeSeriesLogMeans.csv")
+
+# create some date identifiers, impute missing values,
+# and generally clean things up
+# you are welcome :)
+fish_cleanish <- fish %>%
+  # lower case column names
+  rename_with(tolower) %>% 
+  # remove variance columns - not needed
+  dplyr::select(-va1cover, -va2loghetads, -va4loggambo) %>%
+  # create dates, roughly assuming dateseq = month
+  group_by(location) %>%
+  mutate(
+    year = rep(1999:2016, each = 12)[9:(n()+8)],
+    month = rep(1:12, 12)[9:(n()+8)] %>% factor(),
+    dt = ym(paste0(year, "-", month))
+  ) %>%
+  ungroup() %>%
+  mutate(row_id = 1:n())
+
+# impute some missing values
+library(imputeTS)
+out <- list()
+for(group in c("TP", "WRHW", "WRGP")){
+  tmp <- filter(fish_cleanish, location == group)
+  hetad_ts <- ts(
+    tmp$me2loghetads,
+    start = c(1999, 9),
+    freq = 12
+  )
+  gambo_ts <- ts(
+    tmp$me4loggambo,
+    start = c(1999, 9),
+    freq = 12
+  )
+  tmp$me2loghetads <- c(imputeTS::na_kalman(hetad_ts, model = "auto.arima"))
+  tmp$me4loggambo <- c(imputeTS::na_kalman(gambo_ts, model = "auto.arima"))
+  out[[group]] <- tmp
+}
+fish_clean <- do.call("rbind", out)
+```
+
+```{r}
+# plot
+fish_clean %>%
+  ggplot(aes(y = me2loghetads, x = me4loggambo, col = location)) + 
+  geom_point() +
+  theme_bw() +
+  geom_smooth(method = "lm", se = F)
+
+# models - ols
+alt <- lm(me2loghetads ~ me4loggambo + location*cover1 + month, fish_clean)
+par(mfrow = c(2,2))
+plot(alt) # okayish
+
+# independence violated
+pacf(resid(alt)[1:62])
+pacf(resid(alt)[63:124])
+pacf(resid(alt)[125:182])
+
+null <- lm(me2loghetads ~ me4loggambo + location + cover1 + month, fish_clean)
+anova(null, alt)
+```
+
+```{r}
+# gls
+library(nlme)
+alt_gls <- gls(
+  me2loghetads ~ me4loggambo + location*cover1 + month, 
+  data = fish_clean,
+  correlation = corARMA(form = ~ 1 | location, p = 1, q = 1),
+  method = "ML"
+)
+par(mfrow = c(2, 2))
+pacf(resid(alt_gls, type = "normalized")[1:62])
+pacf(resid(alt_gls, type = "normalized")[63:124])
+pacf(resid(alt_gls, type = "normalized")[125:182])
+
+null_gls <- gls(
+  me2loghetads ~ me4loggambo + location + cover1 + month, 
+  data = fish_clean,
+  correlation = corARMA(form = ~ 1 | location, p = 1, q = 1),
+  method = "ML"
+)
+anova(null_gls, alt_gls)
+```
+
+:::{.callout-warning icon=false appearance="simple"}
+
+::: 
+
+\newpage
+
+**Question 2**
+
+
+
+
+
+```{r}
+# load the data and clean it for you :)
+colonyA <- read_csv("ants/colony_E.csv")
+colonyA_clean <- colonyA %>%
+  pivot_longer(-`Ant Index`, names_to = "date", values_to = "count") %>%
+  group_by(date) %>%
+  summarize(mean_act = mean(count), total_act = sum(count)) %>%
+  mutate(dt = ymd(date)) %>%
+  arrange(dt)
+
+colonyA_clean %>%
+  ggplot() +
+  geom_line(aes(x = dt, y = total_act)) +
+  theme_bw()
+
+
+ants_ts <- ts(
+  colonyA_clean$total_act,
+  start = c()
+)
+
+library(forecast)
+fit <- auto.arima(ants_ts)
+predict(fit, n.ahead = 10)
+
+```
+
