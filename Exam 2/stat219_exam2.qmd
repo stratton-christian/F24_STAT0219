@@ -110,7 +110,7 @@ Understanding the dynamics between predator species, prey species, and how each 
 \end{minipage}
 \end{figure}
 
-**Researchers are interested in determining whether the relationship between the Killifish density and the percent vegetative cover depends upon the location, after accounting for the density of the Mosquitofish and any seasonal effects due to month.** Such a result would imply that the Killifish utilize the vegetative cover differently across the three regions, even after accounting for seasonal differences and the impact of the predator species. Within the .qmd file, there is a code chunk that cleans the data for you; you should use the `fish_clean.rds` file for this analysis. For this first question, your goal is to use **ordinary least squares** to address the research question. Be sure to address the model assumptions, but you may ignore any violations of the independence assumption when answering the research question. Your response should be formatted as paragraph, which references an exploratory graphic, the model assumptions, and the results of the statistical test. Use the following rubric to guide your response:
+**Researchers are interested in determining whether the relationship between the Killifish density and the percent vegetative cover depends upon the location, after accounting for the density of the Mosquitofish and any seasonal effects due to month.** Such a result would imply that the Killifish utilize the vegetative cover differently across the three regions, even after accounting for seasonal differences and the impact of the predator species. Within the .qmd file, there is a code chunk that cleans the data for you; you should use the `fish_clean.rds` file for this analysis. For this first question, your goal is to use **ordinary least squares** to address the research question. Be sure to address the model assumptions, but you may ignore any violations of the independence assumption when answering the research question. Your response should be formatted as a paragraph, which references an exploratory graphic, the model assumptions, and the results of the statistical test. Use the following rubric to guide your response:
 
 - [3 pt] Exploratory visual that addresses the research question is created and discussed
 - [6 pt] Appropriate statistical model(s) used
@@ -129,30 +129,13 @@ Understanding the dynamics between predator species, prey species, and how each 
 fish_clean <- readRDS("fish_clean.rds")
 
 # exploratory plots
-fish_clean %>%
-  ggplot(aes(y = me2loghetads, x = cover1, col = location)) + 
-  geom_point() +
-  theme_bw() +
-  geom_smooth(method = "lm", se = F) +
-  labs(
-    y = "log mean Killifish density",
-    x = "Percent vegetative cover"
-  )
 
 # statistical models
-alt <-  lm(me2loghetads ~ me4loggambo + location*cover1 + month, fish_clean)
-null <- lm(me2loghetads ~ me4loggambo + location + cover1 + month, fish_clean)
 
 # plots for assumptions
-par(mfrow = c(2,2))
-plot(alt)
-pacf(resid(alt)[1:62], main = "Location: TP") # location: TP
-pacf(resid(alt)[63:124], main = "Location: WRHW") # location: WRHW
-pacf(resid(alt)[125:182], main = "Location: WRGP") # location: WRGP
-par(mfrow = c(1,1))
 
 # tests
-anova(null, alt)
+
 ```
 
 :::{.callout-warning icon=false appearance="simple"}
@@ -163,7 +146,7 @@ anova(null, alt)
 
 **Question 1B [24 pt]**
 
-This is a continuation of question 1A. For this question, your goal is to use **generalized least squares** to address the research question. Be sure to address the model assumptions, and show that the model you fit resolves any violations of the independence assumption. Your response should be formatted as paragraph, which references the model assumptions, proof that the model you fit addresses any serial correlation in the error structure, and the results of the statistical test. Use the following rubric to guide your response:
+This is a continuation of question 1A. For this question, your goal is to use **generalized least squares** to address the research question. Be sure to address the model assumptions, and show that the model you fit resolves any violations of the independence assumption. Your response should be formatted as a paragraph, which references the model assumptions, proof that the model you fit addresses any serial correlation in the error structure, and the results of the statistical test. Use the following rubric to guide your response:
 
 - [6 pt] Appropriate statistical model(s) used
 - [6 pt] Model assumptions appropriately addressed. You need only reassess the independence assumption.
@@ -171,31 +154,15 @@ This is a continuation of question 1A. For this question, your goal is to use **
 - [4 pt] A conclusion, supported by statistical evidence, is given and the evidence is referenced (statistic and p-value)
 - [4 pt] Formatting (written response, output is reasonably clean, no callout box errors, complete sentences, spelling, figures of reasonable size, etc.)
 
+\newpage
 
 ```{r, message = F, fig.dim = c(7, 6)}
 # models
-library(nlme)
-alt_gls <- gls(
-  me2loghetads ~ me4loggambo + location*cover1 + month, 
-  data = fish_clean,
-  correlation = corARMA(form = ~ 1 | location, p = 1, q = 1),
-  method = "ML"
-)
-null_gls <- gls(
-  me2loghetads ~ me4loggambo + location + cover1 + month, 
-  data = fish_clean,
-  correlation = corARMA(form = ~ 1 | location, p = 1, q = 1),
-  method = "ML"
-)
 
 # assumptions
-par(mfrow = c(2, 2))
-pacf(resid(alt_gls, type = "normalized")[1:62], main = "Location: TP")
-pacf(resid(alt_gls, type = "normalized")[63:124], main = "Location: WRHW")
-pacf(resid(alt_gls, type = "normalized")[125:182], main = "Location: WRGP")
 
 # tests
-anova(null_gls, alt_gls)
+
 ```
 
 :::{.callout-warning icon=false appearance="simple"}
@@ -206,13 +173,13 @@ anova(null_gls, alt_gls)
 
 **Question 2 [17 pt]**
 
-For this question, we return to the Mauna Loa CO$_2$ measurements. As a reminder, this data set describes the average monthly CO$_2$ readings from the Mauna Loa observatory[^2], which have been collected continuously since March of 1958. Suppose that researchers are interested in determining when the CO$_2$ emissions from Mauna Loa are expect to exceed 450 parts per million.
+For this question, we return to the Mauna Loa CO$_2$ measurements. As a reminder, this data set describes the average monthly CO$_2$ readings from the Mauna Loa observatory[^2], which have been collected continuously since March of 1958. Suppose that researchers are interested in determining when the CO$_2$ emissions from Mauna Loa are expected to exceed 450 parts per million.
 
-![](ml.jpg)
+![Source: [USGS](https://www.cnn.com/2022/11/29/us/mauna-loa-volcano-eruption-affect-climate-tool/index.html)](ml.jpg){width=80%}
 
 
 
-**Your goal is to fit a model to the Mauna Loa time series, use that model to forecast the CO$_2$ emissions, and determine the month during which you are 95% confident that the CO$_2$ emissions are at least 450 ppm.** Your response should be formatted as paragraph, and include the following:
+**Your goal is to fit a model to the Mauna Loa time series, use that model to forecast the CO$_2$ emissions, and determine the month during which you are 95% confident that the CO$_2$ emissions are at least 450 ppm.** Your response should be formatted as a paragraph, and include the following:
 
 - [3 pt] Define the model (what kind of model is fit and whether it contains regression coefficients)
 - [4 pt] Proof that this model accounts for the serial correlation in the errors
@@ -222,69 +189,18 @@ For this question, we return to the Mauna Loa CO$_2$ measurements. As a reminder
 
 [^2]: [Link](https://gml.noaa.gov/ccgg/trends/data.html) to the NOAA webpage containing the data. You do not need to download anything from this website. You should use the `co2_mm_mlo.csv` file.  
 
-```{r, message = F, warning = F}
+\newpage
+
+```{r, message = F, warning = F, include = F}
 # clean data
-library(forecast)
 ml <- read_csv("co2_mm_mlo.csv", skip = 40)
 ml_clean <- ml %>%
   dplyr::select(year, month, average) %>%
   mutate(dt = ym(paste0(year, "-", month)))
 ```
 
-```{r, eval = F}
-ml_clean %>%
-  ggplot() +
-  geom_line(aes(x = dt, y = average)) +
-  theme_bw()
-
-ml_ts <- ts(
-  ml_clean$average,
-  start = c(1958, 3),
-  freq = 12
-)
-
-library(forecast)
-fit <- auto.arima(ml_ts)
-saveRDS(fit, "ml_fit.rds")
-```
-
 ```{r, fig.dim = c(7, 6), message = F}
-fit <- readRDS("ml_fit.rds")
-forecast <- forecast(fit, h = 3+12*20, level = 95)
-# plot
-forecast_df <- tibble(
-  year = c(rep(2024, 3), rep(2025:(2025+19), each = 12)),
-  month = c(10:12, rep(1:12, 20)),
-  value = forecast$mean,
-  lwr = c(forecast$lower),
-  upr = c(forecast$upper)
-) %>% mutate(name = "forecast", dt = ym(paste0(year, "-", month)))
 
-obs_df <- ml_clean %>%
-  mutate(
-    fitted = fitted(fit)
-  ) %>%
-  dplyr::select(dt, fitted, average) %>%
-  pivot_longer(-dt)
-
-pacf(resid(fit))
-
-ggplot() +
-  geom_line(
-    data = obs_df,
-    aes(x = dt, y = value, col = name, linetype = name)
-  ) +
-  geom_line(
-    data = forecast_df,
-    aes(x = dt, y = value, col = name, linetype = name)
-  ) +
-  geom_ribbon(
-    data = forecast_df,
-    aes(x = dt, ymin = lwr, ymax = upr), alpha = .3
-  ) + 
-  theme_bw()
-
-forecast_df %>% filter(lwr > 450)
 ```
 
 
