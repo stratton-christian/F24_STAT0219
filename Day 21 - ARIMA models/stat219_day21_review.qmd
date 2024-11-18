@@ -1,0 +1,78 @@
+---
+title: "Day 21 - Review"
+format:
+  pdf:
+    fontsize: 12pt
+    geometry:
+      - inner=1.5cm
+      - outer=1.5cm
+      - top=2.5cm
+      - bottom=2.5cm
+    include-in-header:
+      - text: |
+          \addtokomafont{disposition}{\rmfamily}
+          \usepackage{fancyhdr, lastpage, framed, caption, xcolor, setspace}
+          \captionsetup[figure]{labelformat=empty}
+          \pagestyle{fancyplain}
+          \fancyhf{}
+          \lhead{\fancyplain{}{STAT 0219: Time Series Analysis}}
+          \rhead{\fancyplain{}{Stratton - Day 21}}
+          \fancyfoot[RO, LE] {page \thepage\ of \pageref{LastPage}}
+          \thispagestyle{plain}
+editor: source
+---
+\vspace{-1in}
+
+## Inference
+
+### Ordinary least squares
+
+- **Purpose**:
+
+\vfill
+
+- **Assumptions**:
+
+\vfill
+
+- **Available tests**:
+
+\vfill
+
+- **R functions**:
+
+\vfill
+
+\newpage
+
+### Generalized least squares
+
+- **Purpose**:
+
+\vfill
+
+- **Assumptions**:
+
+\vfill
+
+- **Available tests**:
+
+\vfill
+
+- **R functions**:
+
+\vfill
+
+\newpage
+
+## Forecasting
+
+- **Purpose**:
+
+\vfill
+
+- **R functions**:
+
+\vfill
+
+

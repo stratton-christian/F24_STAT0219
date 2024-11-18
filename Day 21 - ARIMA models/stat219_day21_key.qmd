@@ -1,0 +1,144 @@
+---
+title: "Day 21 - ARIMA models"
+format:
+  pdf:
+    fontsize: 12pt
+    geometry:
+      - inner=1.5cm
+      - outer=1.5cm
+      - top=2.5cm
+      - bottom=2.5cm
+    include-in-header:
+      - text: |
+          \addtokomafont{disposition}{\rmfamily}
+          \usepackage{fancyhdr, lastpage, framed, caption, xcolor, setspace}
+          \captionsetup[figure]{labelformat=empty}
+          \pagestyle{fancyplain}
+          \fancyhf{}
+          \lhead{\fancyplain{}{STAT 0219: Time Series Analysis}}
+          \rhead{\fancyplain{}{Stratton - Day 21}}
+          \fancyfoot[RO, LE] {page \thepage\ of \pageref{LastPage}}
+          \thispagestyle{plain}
+editor: source
+---
+\vspace{-1in}
+
+## Introduction
+
+We finally combine all all the stochastic error models we have considered this semester, culminating in the seasonal ARIMA model. 
+
+```{r, echo = T, warning = F, message = F}
+# packages
+library(tidyverse)
+library(lubridate)
+library(forecast)
+```
+
+\newpage
+
+## Review(ish)
+
+Recall the random walk model, $x_t = x_{t-1} + w_t$, where $w_t$ is a white noise series. Compute the *first-order differences* for the model: $\nabla x_t = x_t - x_{t-1}$.
+
+\newpage
+
+## Integrated processes
+
+:::{.callout-note title="Integrated model"}
+A series $\{x_t\}$ is _______________________, $I(d)$, if the $d^{th}$ difference of $\{x_t\}$ is white noise, denoted $\nabla^d x_t = w_t$. It can be shown that $\nabla^d \equiv (1 - B)^d$, where $B$ is the backshift operator. Therefore, $\{x_t\}$ is $I(d)$ if
+$$
+(1 - B)^d x_t = w_t
+$$
+:::
+
+```{r, fig.dim = c(7, 7), message = F, warning = F}
+cbe <- read_delim("cbe.dat")
+elec <- dplyr::select(cbe, elec)
+elec_ts <- ts(elec$elec, start = 1958, freq = 12)
+par(mfrow = c(2,2))
+plot(elec_ts)
+plot(diff(elec_ts))
+plot(diff(log(elec_ts)))
+plot(diff(diff(log(elec_ts))))
+```
+
+\newpage
+
+## ARIMA models
+
+:::{.callout-note title="ARIMA models"}
+A time series $\{x_t\}$ follows and ARIMA($p, d, q$) process if the $d^{th}$ differences of the series are an ARMA($p, q$) process. That is
+$$
+\theta_p (B)(1 - B)^d x_t = \phi_q(B)w_t
+$$
+
+You will not be expected to manipulate ARIMA models to determine stationarity or invertibility in this class, but it can be done. 
+:::
+
+```{r, fig.dim = c(7, 3.5)}
+(arima_fit <- arima(elec_ts, order = c(1, 1, 1)))
+pacf(resid(arima_fit)) # not good
+```
+
+\newpage
+
+## Seasonal ARIMA models
+
+:::{.callout-note title="Seasonal ARIMA models"}
+Finally, we introduce the seasonal ARIMA model, in which we allow we allow each of the autoregressive, integrated, and moving average components to depend on the value from the previous season. The seasonal ARIMA model, denoted ARIMA($p, d, q$)($P, D, Q$)$_s$, can be written in terms of the backshift operator:
+$$
+\Theta_P(B^s)\theta_p(B)(1 - B^s)^D(1 - B)^dx_t = \Phi_Q(B^s)\phi_q(B)w_t 
+$$
+:::
+
+```{r, fig.dim = c(7, 3.5)}
+(arima_fit <- arima(elec_ts, order = c(1, 1, 1), seasonal = c(1, 1, 1)))
+pacf(resid(arima_fit)) # better, still not good
+```
+
+\newpage
+
+:::{.callout-note title="Fitting ARIMA"}
+The `auto.arima` function in the `forecast` package uses AIC to select the "best" seasonal ARIMA model. You may restrict to a subset of seasonal ARIMA models by setting `max.p, max.d, max.q, max.P, max.D, max.Q` equal to a non-negative integer. Additionally, the `auto.arima` function accepts covariates for regression via the `xreg` argument. 
+
+\vspace{.125in}
+
+To forecast with an `auto.arima` fit, we use the `forecast` function. See `?forecast.Arima` for more details.
+:::
+
+```{r, fig.dim = c(7, 3.5)}
+(auto_fit <- auto.arima(elec_ts))
+pacf(resid(auto_fit))
+```
+
+\newpage
+
+```{r, fig.dim = c(7, 5)}
+# fitted is defined for auto.arima fits!
+fitted(auto_fit) |> head()
+
+# use the forecast function to forecast
+auto_forecast <- forecast(auto_fit, h = 5*12, level = 95)
+
+# putting it together
+obs_df <- elec %>%
+  mutate(time = c(time(elec_ts)), fitted = c(fitted(auto_fit))) %>%
+  pivot_longer(-time)
+  
+forecast_df <- tibble(
+  time = c(time(auto_forecast$mean)),
+  value = c(auto_forecast$mean),
+  lwr = c(auto_forecast$lower),
+  upr = c(auto_forecast$upper)
+) %>% mutate(name = "forecast")
+
+ggplot() +
+  geom_line(data = obs_df, aes(x = time, y = value, col = name)) +
+  geom_line(data = forecast_df, aes(x = time, y = value, col = name)) + 
+  geom_ribbon(
+    data = forecast_df, aes(x = time, ymin = lwr, ymax = upr),
+    alpha = .30
+  ) +
+  theme_bw()
+```
+

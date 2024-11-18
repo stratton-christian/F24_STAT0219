@@ -37,7 +37,7 @@ set.seed(11142024)
 ```
 
 :::{.callout-important}
-You may use any resource to complete this except **except** for other people (classmates, other faculty members, your parents, etc.) Please do not discuss this exam with anyone but me, and be sure to **cite all references and materials used to answer each question.** Please type your name below to acknowledge that you have not discussed this exam with anyone else. 
+You may use any resource to complete this **except** for other people (classmates, other faculty members, your parents, etc.) Please do not discuss this exam with anyone but me, and be sure to **cite all references and materials used to answer each question.** Please type your name below to acknowledge that you have not discussed this exam with anyone else. 
 :::
 
 Your name:
@@ -146,7 +146,7 @@ fish_clean <- readRDS("fish_clean.rds")
 
 **Question 1B [24 pt]**
 
-This is a continuation of question 1A. For this question, your goal is to use **generalized least squares** to address the research question. Be sure to address the model assumptions, and show that the model you fit resolves any violations of the independence assumption. Your response should be formatted as a paragraph, which references the model assumptions, proof that the model you fit addresses any serial correlation in the error structure, and the results of the statistical test. Use the following rubric to guide your response:
+This is a continuation of question 1A. For this question, your goal is to use **generalized least squares** to address the research question. Be sure to readdress the independence assumption, and show that the model you fit resolves any violations of the independence assumption. Your response should be formatted as a paragraph, which references proof that the model you fit addresses any serial correlation in the error structure and the results of the statistical test. Use the following rubric to guide your response:
 
 - [6 pt] Appropriate statistical model(s) used
 - [6 pt] Model assumptions appropriately addressed. You need only reassess the independence assumption.
@@ -171,7 +171,7 @@ This is a continuation of question 1A. For this question, your goal is to use **
 
 \newpage
 
-**Question 2 [17 pt]**
+**Question 2 [19 pt]**
 
 For this question, we return to the Mauna Loa CO$_2$ measurements. As a reminder, this data set describes the average monthly CO$_2$ readings from the Mauna Loa observatory[^2], which have been collected continuously since March of 1958. Suppose that researchers are interested in determining when the CO$_2$ emissions from Mauna Loa are expected to exceed 450 parts per million.
 
@@ -185,7 +185,7 @@ For this question, we return to the Mauna Loa CO$_2$ measurements. As a reminder
 - [4 pt] Proof that this model accounts for the serial correlation in the errors
 - [4 pt] A plot that visualizes the observed series, fitted series, and forecasted series (with 95% prediction intervals) in a single figure
 - [4 pt] An answer to the research question
-- [2 pt] Good formatting (written response, output is reasonably clean, no callout box errors, complete sentences, spelling, figures of reasonable size, etc.)
+- [4 pt] Formatting (written response, output is reasonably clean, no callout box errors, complete sentences, spelling, figures of reasonable size, etc.)
 
 [^2]: [Link](https://gml.noaa.gov/ccgg/trends/data.html) to the NOAA webpage containing the data. You do not need to download anything from this website. You should use the `co2_mm_mlo.csv` file.  
 
